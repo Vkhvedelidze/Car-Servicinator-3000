@@ -4,18 +4,43 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.Button;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 
+import com.example.programminggroupproject.model.User;
 
 public class DashboardController {
 
     @FXML
     private Label welcomeLabel;
+    @FXML
+    private Button clientButton;
+    @FXML
+    private Button mechanicButton;
+    @FXML
+    private Button adminButton;
 
-    public void setUsername(String username) {
-        welcomeLabel.setText("Welcome, " + username + "!");
+    public void setUser(User user) {
+        if (user != null) {
+            welcomeLabel.setText("Welcome, " + user.getFullName() + " (" + user.getRole() + ")");
+            clientButton.setVisible(false);
+            mechanicButton.setVisible(false);
+            adminButton.setVisible(false);
+
+            switch (user.getRole()) {
+                case "client":
+                    clientButton.setVisible(true);
+                    break;
+                case "mechanic":
+                    mechanicButton.setVisible(true);
+                    break;
+                case "admin":
+                    adminButton.setVisible(true);
+                    break;
+            }
+        }
     }
 
 
@@ -35,5 +60,19 @@ public class DashboardController {
             e.printStackTrace();
         }
     }
-}
 
+    @FXML
+    private void handleClientAction() {
+        System.out.println("Client action triggered");
+    }
+
+    @FXML
+    private void handleMechanicAction() {
+        System.out.println("Mechanic action triggered");
+    }
+
+    @FXML
+    private void handleAdminAction() {
+        System.out.println("Admin action triggered");
+    }
+}

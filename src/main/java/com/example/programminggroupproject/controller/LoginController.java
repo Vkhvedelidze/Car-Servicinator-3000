@@ -1,6 +1,8 @@
 package com.example.programminggroupproject.controller;
 
 import com.example.programminggroupproject.service.AuthService;
+import com.example.programminggroupproject.model.User;
+import com.example.programminggroupproject.session.Session;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -42,16 +44,18 @@ public class LoginController {
             return;
         }
 
-        if (AuthService.authenticate(username, password)) {
-            // Go to dashboard
-            navigateToDashboard(username);
+        User user = AuthService.authenticate(username, password);
+
+        if (user != null) {
+            Session.setCurrentUser(user);
+            navigateToDashboard(user);
         } else {
             errorLabel.setText("Invalid username or password");
         }
     }
 
 
-    private void navigateToDashboard(String username) {
+    private void navigateToDashboard(User user) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/programminggroupproject/dashboard.fxml"));
             Scene dashboardScene = new Scene(loader.load(), 800, 600);
@@ -60,7 +64,7 @@ public class LoginController {
             dashboardScene.getStylesheets().add(css);
 
             DashboardController controller = loader.getController();
-            controller.setUsername(username);
+            controller.setUser(user);
 
             Stage stage = (Stage) usernameField.getScene().getWindow();
             stage.setScene(dashboardScene);
@@ -71,4 +75,3 @@ public class LoginController {
         }
     }
 }
-
