@@ -1,5 +1,7 @@
 package com.example.programminggroupproject.controller;
 
+import com.example.programminggroupproject.model.User;
+import com.example.programminggroupproject.session.Session;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -20,6 +22,13 @@ public class ClientController {
                     getClass().getResource("/com/example/programminggroupproject/dashboard.fxml")
             );
             Scene scene = new Scene(loader.load(), 800, 600);
+
+            // 🔥 Get the controller and restore the current user/role
+            DashboardController controller = loader.getController();
+            User currentUser = Session.getCurrentUser();
+            if (currentUser != null) {
+                controller.setUser(currentUser);
+            }
 
             Stage stage = (Stage) debugLabel.getScene().getWindow();
             stage.setScene(scene);
