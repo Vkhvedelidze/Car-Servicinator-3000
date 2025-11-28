@@ -20,26 +20,43 @@ public class ClientController {
     @FXML
     private ComboBox<String> shopComboBox;
 
+    // Service catalog
     @FXML
-    private CheckBox engineIssueCheck;
+    private CheckBox serviceOilCheck;
 
     @FXML
-    private CheckBox brakeIssueCheck;
+    private CheckBox serviceTiresCheck;
 
     @FXML
-    private CheckBox tireIssueCheck;
+    private CheckBox serviceBrakesCheck;
 
     @FXML
-    private CheckBox batteryIssueCheck;
+    private CheckBox serviceBatteryCheck;
 
     @FXML
-    private CheckBox noiseIssueCheck;
+    private CheckBox serviceFluidsCheck;
 
     @FXML
-    private CheckBox fluidLeakIssueCheck;
+    private CheckBox serviceEnginePerfCheck;
 
     @FXML
-    private CheckBox otherIssueCheck;
+    private CheckBox serviceCleaningCheck;
+
+    @FXML
+    private CheckBox serviceCheckupCheck;
+
+    // Mechanic permissions
+    @FXML
+    private RadioButton permissionStrictRadio;
+
+    @FXML
+    private RadioButton permissionExtraRadio;
+
+    @FXML
+    private RadioButton permissionAskRadio;
+
+    @FXML
+    private TextField permissionBudgetField;
 
     @FXML
     private TextArea notesArea;
@@ -49,6 +66,8 @@ public class ClientController {
 
     @FXML
     private Label debugLabel;
+
+    private ToggleGroup permissionGroup;
 
     @FXML
     public void initialize() {
@@ -63,6 +82,12 @@ public class ClientController {
                 "Highway Service Center",
                 "Premium Auto Care"
         );
+
+        // Group mechanic permissions
+        permissionGroup = new ToggleGroup();
+        permissionStrictRadio.setToggleGroup(permissionGroup);
+        permissionExtraRadio.setToggleGroup(permissionGroup);
+        permissionAskRadio.setToggleGroup(permissionGroup);
     }
 
     @FXML
@@ -70,62 +95,109 @@ public class ClientController {
         String vehicle = vehicleComboBox.getValue();
         String shop = shopComboBox.getValue();
 
-        List<String> issues = new ArrayList<>();
-        if (engineIssueCheck.isSelected()) {
-            issues.add("Engine / performance");
+        // Collect chosen services
+        List<String> services = new ArrayList<>();
+        if (serviceOilCheck.isSelected()) {
+            services.add("Oil & Filters");
         }
-        if (brakeIssueCheck.isSelected()) {
-            issues.add("Brakes");
+        if (serviceTiresCheck.isSelected()) {
+            services.add("Tires & Alignment");
         }
-        if (tireIssueCheck.isSelected()) {
-            issues.add("Tires / alignment");
+        if (serviceBrakesCheck.isSelected()) {
+            services.add("Brakes");
         }
-        if (batteryIssueCheck.isSelected()) {
-            issues.add("Battery / electrical");
+        if (serviceBatteryCheck.isSelected()) {
+            services.add("Battery & Electrical");
         }
-        if (noiseIssueCheck.isSelected()) {
-            issues.add("Unusual noises");
+        if (serviceFluidsCheck.isSelected()) {
+            services.add("Fluids & Leaks");
         }
-        if (fluidLeakIssueCheck.isSelected()) {
-            issues.add("Fluid leak");
+        if (serviceEnginePerfCheck.isSelected()) {
+            services.add("Engine Performance");
         }
-        if (otherIssueCheck.isSelected()) {
-            issues.add("Other / not sure");
+        if (serviceCleaningCheck.isSelected()) {
+            services.add("Cleaning / Detailing");
+        }
+        if (serviceCheckupCheck.isSelected()) {
+            services.add("General check-up");
         }
 
         String notes = notesArea.getText().trim();
 
-        // Validation
+        // ✅ Validation: vehicle & shop
         if (vehicle == null || shop == null) {
             messageLabel.setStyle("-fx-text-fill: red;");
             messageLabel.setText("Please select a vehicle and a mechanic shop.");
             return;
         }
 
-        if (issues.isEmpty()) {
+        // ✅ Validation: at least one service
+        if (services.isEmpty()) {
             messageLabel.setStyle("-fx-text-fill: red;");
-            messageLabel.setText("Please select at least one issue.");
+            messageLabel.setText("Please choose at least one service.");
             return;
+        }
+
+        // ✅ Validation: mechanic permissions
+        if (permissionGroup.getSelectedToggle() == null) {
+            messageLabel.setStyle("-fx-text-fill: red;");
+            messageLabel.setText("Please choose the mechanic permissions.");
+            return;
+        }
+
+        String permissionDescription;
+
+        if (permissionStrictRadio.isSelected()) {
+            permissionDescription = "Only the selected services, nothing else.";
+        } else if (permissionExtraRadio.isSelected()) {
+            String budgetText = permissionBudgetField.getText().trim();
+            if (budgetText.isEmpty()) {
+                messageLabel.setStyle("-fx-text-fill: red;");
+                messageLabel.setText("Please set a € limit for extra work.");
+                return;
+            }
+            double budget;
+            try {
+                budget = Double.parseDouble(budgetText.replace(",", "."));
+            } catch (NumberFormatException e) {
+                messageLabel.setStyle("-fx-text-fill: red;");
+                messageLabel.setText("Invalid € limit. Use a number like 50 or 100.5");
+                return;
+            }
+            if (budget < 0) {
+                messageLabel.setStyle("-fx-text-fill: red;");
+                messageLabel.setText("€ limit cannot be negative.");
+                return;
+            }
+            permissionDescription = "Mechanic may do extra work up to " + budget + "€.";
+        } else if (permissionAskRadio.isSelected()) {
+            permissionDescription = "Mechanic must ask before doing anything else.";
+        } else {
+            permissionDescription = "Unknown permissions.";
         }
 
         // For now just log to console – later this becomes a DB record
         System.out.println("=== New service request ===");
         System.out.println("Vehicle: " + vehicle);
         System.out.println("Shop: " + shop);
-        System.out.println("Issues: " + String.join(", ", issues));
+        System.out.println("Services: " + String.join(", ", services));
+        System.out.println("Permissions: " + permissionDescription);
         System.out.println("Notes: " + (notes.isEmpty() ? "(none)" : notes));
 
         messageLabel.setStyle("-fx-text-fill: #28a745;");
-        messageLabel.setText("Service request submitted (dummy) with structured issues!");
+        messageLabel.setText("Service request submitted (dummy) with structured services and permissions!");
 
-        // Optional: reset checkboxes and notes
-        engineIssueCheck.setSelected(false);
-        brakeIssueCheck.setSelected(false);
-        tireIssueCheck.setSelected(false);
-        batteryIssueCheck.setSelected(false);
-        noiseIssueCheck.setSelected(false);
-        fluidLeakIssueCheck.setSelected(false);
-        otherIssueCheck.setSelected(false);
+        // Optional: reset choices
+        serviceOilCheck.setSelected(false);
+        serviceTiresCheck.setSelected(false);
+        serviceBrakesCheck.setSelected(false);
+        serviceBatteryCheck.setSelected(false);
+        serviceFluidsCheck.setSelected(false);
+        serviceEnginePerfCheck.setSelected(false);
+        serviceCleaningCheck.setSelected(false);
+        serviceCheckupCheck.setSelected(false);
+        permissionGroup.selectToggle(null);
+        permissionBudgetField.clear();
         notesArea.clear();
     }
 

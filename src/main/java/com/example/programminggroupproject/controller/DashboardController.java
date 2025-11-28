@@ -74,6 +74,7 @@ public class DashboardController {
         }
     }
 
+
     @FXML
     private void handleClientAction() {
         try {

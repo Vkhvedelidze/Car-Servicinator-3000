@@ -42,47 +42,70 @@
 
             <Label text="Select Vehicle"/>
             <ComboBox fx:id="vehicleComboBox"
-                    promptText="Choose vehicle"/>
+                      promptText="Choose vehicle"/>
 
             <Label text="Select Mechanic Shop"/>
             <ComboBox fx:id="shopComboBox"
-                    promptText="Choose mechanic shop"/>
+                      promptText="Choose mechanic shop"/>
 
-            <Label text="What seems to be wrong?"/>
+            <Label text="Choose the services you want" />
 
+            <!-- Service catalog -->
             <VBox spacing="5">
-                <CheckBox fx:id="engineIssueCheck"
-                        text="Engine / performance issues (loss of power, rough idle, stalling)"/>
-                <CheckBox fx:id="brakeIssueCheck"
-                        text="Brakes (squeaking, grinding, soft pedal, ABS light)"/>
-                <CheckBox fx:id="tireIssueCheck"
-                        text="Tires / alignment (vibration, pulling to one side, uneven wear)"/>
-                <CheckBox fx:id="batteryIssueCheck"
-                        text="Battery / electrical (won’t start, dim lights, electronics failing)"/>
-                <CheckBox fx:id="noiseIssueCheck"
-                        text="Unusual noises (clunking, rattling, whining, knocking)"/>
-                <CheckBox fx:id="fluidLeakIssueCheck"
-                        text="Fluid leak (oil, coolant, transmission, brake fluid)"/>
-                <CheckBox fx:id="otherIssueCheck"
-                        text="Other / not sure"/>
+                <CheckBox fx:id="serviceOilCheck"
+                          text="🔧 Oil &amp; Filters / Basic service"/>
+                <CheckBox fx:id="serviceTiresCheck"
+                          text="🛞 Tires &amp; Alignment"/>
+                <CheckBox fx:id="serviceBrakesCheck"
+                          text="🛑 Brakes"/>
+                <CheckBox fx:id="serviceBatteryCheck"
+                          text="🔋 Battery &amp; Electrical"/>
+                <CheckBox fx:id="serviceFluidsCheck"
+                          text="💧 Fluids &amp; Leaks"/>
+                <CheckBox fx:id="serviceEnginePerfCheck"
+                          text="💨 Engine Performance"/>
+                <CheckBox fx:id="serviceCleaningCheck"
+                          text="🧼 Cleaning / Detailing"/>
+                <CheckBox fx:id="serviceCheckupCheck"
+                          text="🧪 General check-up"/>
             </VBox>
 
+            <!-- Mechanic permissions -->
+            <Label text="Mechanic permissions" />
+
+            <VBox spacing="5">
+                <RadioButton fx:id="permissionStrictRadio"
+                             text="Only perform the selected services, nothing else."/>
+
+                <HBox spacing="5" alignment="CENTER_LEFT">
+                    <RadioButton fx:id="permissionExtraRadio"
+                                 text="You may do extra work up to:"/>
+                    <TextField fx:id="permissionBudgetField"
+                               promptText="€ limit"
+                               prefWidth="80"/>
+                </HBox>
+
+                <RadioButton fx:id="permissionAskRadio"
+                             text="Contact me before doing anything else."/>
+            </VBox>
+
+            <!-- Notes -->
             <Label text="Additional notes (optional)"/>
             <TextArea fx:id="notesArea"
-                    promptText="Anything else the mechanic should know?"
-                    prefRowCount="3"/>
+                      promptText="Anything else the mechanic should know?"
+                      prefRowCount="3"/>
 
             <Button text="Submit Request"
                     onAction="#handleSubmit"
                     style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-padding: 8 16;"/>
 
             <Label fx:id="messageLabel"
-                text=""
-                style="-fx-text-fill: #28a745;"/>
+                   text=""
+                   style="-fx-text-fill: #28a745;"/>
 
             <Label fx:id="debugLabel"
-                text="Client request screen"
-                style="-fx-text-fill: #999; -fx-font-size: 11;"/>
+                   text="Client request screen"
+                   style="-fx-text-fill: #999; -fx-font-size: 11;"/>
         </VBox>
     </VBox>
 
