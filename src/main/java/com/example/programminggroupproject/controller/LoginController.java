@@ -52,6 +52,9 @@ public class LoginController {
         } else {
             errorLabel.setText("Invalid username or password");
         }
+
+        System.out.println("Entered username: [" + username + "]");
+        System.out.println("Entered password: [" + password + "]");
     }
 
 

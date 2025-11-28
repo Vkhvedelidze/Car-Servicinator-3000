@@ -35,14 +35,31 @@
             </font>
         </Label>
 
-        <VBox spacing="15" alignment="CENTER">
-            <Button text="Choose Mechanic Shop" prefWidth="250" 
-                    style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12;"/>
-            <Button text="Request Service" prefWidth="250" 
-                    style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12;"/>
-            <Button text="View Service Status" prefWidth="250" 
-                    style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12;"/>
-        </VBox>
+    <VBox spacing="15" alignment="CENTER">
+        <!-- Client role button -->
+        <Button fx:id="clientButton"
+                text="Request Service"
+                prefWidth="250"
+                visible="false"
+                onAction="#handleClientAction"
+                style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12;"/>
+
+        <!-- Mechanic role button -->
+        <Button fx:id="mechanicButton"
+                text="View Assigned Jobs"
+                prefWidth="250"
+                visible="false"
+                onAction="#handleMechanicAction"
+                style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12;"/>
+
+        <!-- Admin role button -->
+        <Button fx:id="adminButton"
+                text="Manage System"
+                prefWidth="250"
+                visible="false"
+                onAction="#handleAdminAction"
+                style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12;"/>
+    </VBox>
 
         <Label text="(Features coming soon)" style="-fx-text-fill: #666; -fx-font-size: 12px;"/>
     </VBox>
