@@ -75,13 +75,11 @@ public class ClientController {
         vehicleComboBox.getItems().addAll(
                 "Toyota Corolla - ABC123",
                 "Honda Civic - XYZ789",
-                "BMW 3 Series - AAA111"
-        );
+                "BMW 3 Series - AAA111");
         shopComboBox.getItems().addAll(
                 "Downtown Mechanic Shop",
                 "Highway Service Center",
-                "Premium Auto Care"
-        );
+                "Premium Auto Care");
 
         // Group mechanic permissions
         permissionGroup = new ToggleGroup();
@@ -176,18 +174,25 @@ public class ClientController {
             permissionDescription = "Unknown permissions.";
         }
 
-        // For now just log to console – later this becomes a DB record
-        System.out.println("=== New service request ===");
+        // Create ServiceRequest
+        com.example.programminggroupproject.model.ServiceRequest request = new com.example.programminggroupproject.model.ServiceRequest();
+        request.setClientName(
+                Session.getCurrentUser() != null ? Session.getCurrentUser().getFullName() : "Unknown Client");
+        request.setVehicleInfo(vehicle);
+        request.setServiceDescription(String.join(", ", services));
+        request.setStatus("Pending");
+        request.setCreatedAt(java.time.LocalDateTime.now());
+
+        // Save to DataService
+        com.example.programminggroupproject.service.DataService.getInstance().addServiceRequest(request);
+
+        System.out.println("=== New service request saved ===");
         System.out.println("Vehicle: " + vehicle);
         System.out.println("Shop: " + shop);
-        System.out.println("Services: " + String.join(", ", services));
-        System.out.println("Permissions: " + permissionDescription);
-        System.out.println("Notes: " + (notes.isEmpty() ? "(none)" : notes));
 
         messageLabel.setStyle("-fx-text-fill: #28a745;");
-        messageLabel.setText("Service request submitted (dummy) with structured services and permissions!");
+        messageLabel.setText("Service request submitted successfully!");
 
-        // Optional: reset choices
         serviceOilCheck.setSelected(false);
         serviceTiresCheck.setSelected(false);
         serviceBrakesCheck.setSelected(false);
@@ -205,8 +210,7 @@ public class ClientController {
     private void handleBack() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/example/programminggroupproject/dashboard.fxml")
-            );
+                    getClass().getResource("/com/example/programminggroupproject/dashboard.fxml"));
             Scene scene = new Scene(loader.load(), 800, 600);
 
             // Restore current user & role-based dashboard
