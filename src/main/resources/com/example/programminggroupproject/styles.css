@@ -1,18 +1,202 @@
+/* Modern Color Scheme */
+:root {
+    --primary-color: #007bff;
+    --primary-hover: #0056b3;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --dark-color: #343a40;
+    --light-gray: #f5f5f5;
+    --border-color: #dee2e6;
+    --text-dark: #212529;
+    --text-muted: #6c757d;
+}
+
+/* General Styling */
+.root {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 14px;
+}
+
+/* Button Styling */
 .button {
-    -fx-background-radius: 5;
+    -fx-background-radius: 6;
     -fx-cursor: hand;
+    -fx-padding: 10 20;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 4, 0, 0, 2);
+    -fx-transition: all 0.3s ease;
 }
 
 .button:hover {
     -fx-opacity: 0.9;
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 6, 0, 0, 3);
 }
 
-/* Text field styling */
-.text-field, .password-field {
-    -fx-border-color: #ccc;
+.button:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* Primary Button */
+.button-primary {
+    -fx-background-color: linear-gradient(to bottom, #007bff, #0056b3);
+    -fx-text-fill: white;
+}
+
+.button-primary:hover {
+    -fx-background-color: linear-gradient(to bottom, #0056b3, #003d82);
+}
+
+/* Success Button */
+.button-success {
+    -fx-background-color: linear-gradient(to bottom, #28a745, #1e7e34);
+    -fx-text-fill: white;
+}
+
+/* Danger Button */
+.button-danger {
+    -fx-background-color: linear-gradient(to bottom, #dc3545, #c82333);
+    -fx-text-fill: white;
+}
+
+/* Info Button */
+.button-info {
+    -fx-background-color: linear-gradient(to bottom, #17a2b8, #117a8b);
+    -fx-text-fill: white;
+}
+
+/* Text Field & Password Field Styling */
+.text-field, .password-field, .text-area {
+    -fx-border-color: #dee2e6;
     -fx-border-width: 1;
-    -fx-border-radius: 5;
-    -fx-background-radius: 5;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 10;
+    -fx-background-color: white;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 2, 0, 0, 1);
+}
+
+.text-field:focused, .password-field:focused, .text-area:focused {
+    -fx-border-color: #007bff;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,123,255,0.25), 4, 0, 0, 0);
+}
+
+/* ComboBox Styling */
+.combo-box {
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-border-color: #dee2e6;
+    -fx-background-color: white;
+}
+
+.combo-box:focused {
+    -fx-border-color: #007bff;
+    -fx-border-width: 2;
+}
+
+/* CheckBox Styling */
+.check-box {
+    -fx-cursor: hand;
+}
+
+.check-box .box {
+    -fx-background-color: white;
+    -fx-border-color: #dee2e6;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.check-box:selected .box {
+    -fx-background-color: #007bff;
+    -fx-border-color: #007bff;
+}
+
+.check-box:hover .box {
+    -fx-border-color: #007bff;
+}
+
+/* RadioButton Styling */
+.radio-button {
+    -fx-cursor: hand;
+}
+
+.radio-button .radio {
+    -fx-background-color: white;
+    -fx-border-color: #dee2e6;
+}
+
+.radio-button:selected .radio {
+    -fx-background-color: white;
+    -fx-border-color: #007bff;
+}
+
+.radio-button:selected .dot {
+    -fx-background-color: #007bff;
+}
+
+/* Label Styling */
+.label {
+    -fx-text-fill: #212529;
+}
+
+.label-header {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #343a40;
+}
+
+/* TableView Styling */
+.table-view {
+    -fx-background-color: white;
+    -fx-border-color: #dee2e6;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.table-view .column-header {
+    -fx-background-color: #f8f9fa;
+    -fx-text-fill: #495057;
+    -fx-font-weight: bold;
     -fx-padding: 10;
 }
 
+.table-view .table-row-cell {
+    -fx-border-color: transparent;
+}
+
+.table-view .table-row-cell:selected {
+    -fx-background-color: #e7f3ff;
+    -fx-text-fill: #212529;
+}
+
+.table-view .table-row-cell:hover {
+    -fx-background-color: #f1f8ff;
+}
+
+/* Card/Panel Styling */
+.card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 8, 0, 0, 2);
+    -fx-padding: 25;
+}
+
+/* Scroll Pane */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Separator */
+.separator {
+    -fx-background-color: #dee2e6;
+}
