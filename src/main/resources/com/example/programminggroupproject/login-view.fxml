@@ -51,6 +51,8 @@
         <Button text="Login" onAction="#handleLogin" prefWidth="300" 
                 style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;">
         </Button>
+        <Button text="Register New Account" onAction="#handleRegister" prefWidth="300"
+                style="-fx-background-color: transparent; -fx-text-fill: #007bff; -fx-font-size: 12px; -fx-underline: true;"/>
     </VBox>
 
     <Region VBox.vgrow="SOMETIMES"/>

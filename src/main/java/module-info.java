@@ -8,8 +8,9 @@ module com.example.programminggroupproject {
 
     opens com.example.programminggroupproject to javafx.fxml;
     opens com.example.programminggroupproject.controller to javafx.fxml;
-    
+
     exports com.example.programminggroupproject;
     exports com.example.programminggroupproject.controller;
     exports com.example.programminggroupproject.service;
+    exports com.example.programminggroupproject.model;
 }

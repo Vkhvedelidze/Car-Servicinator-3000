@@ -19,11 +19,12 @@ public class ServiceRequest {
     private BigDecimal totalPriceFinal;
     private LocalDateTime createdAt;
 
-    public ServiceRequest() {}
+    public ServiceRequest() {
+    }
 
     public ServiceRequest(Long id, Long clientId, Long vehicleId, Long shopId, Long mechanicId,
-                          String status, BigDecimal totalPriceEstimated, BigDecimal totalPriceFinal,
-                          LocalDateTime createdAt) {
+            String status, BigDecimal totalPriceEstimated, BigDecimal totalPriceFinal,
+            LocalDateTime createdAt) {
         this.id = id;
         this.clientId = clientId;
         this.vehicleId = vehicleId;
@@ -34,7 +35,6 @@ public class ServiceRequest {
         this.totalPriceFinal = totalPriceFinal;
         this.createdAt = createdAt;
     }
-
 
     public Long getId() {
         return id;
@@ -108,21 +108,41 @@ public class ServiceRequest {
         this.createdAt = createdAt;
     }
 
+    private String clientName;
+    private String vehicleInfo;
+    private String serviceDescription;
+
+    public String getClientName() {
+        return clientName;
+    }
+
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
+    }
+
+    public String getVehicleInfo() {
+        return vehicleInfo;
+    }
+
+    public void setVehicleInfo(String vehicleInfo) {
+        this.vehicleInfo = vehicleInfo;
+    }
+
+    public String getServiceDescription() {
+        return serviceDescription;
+    }
+
+    public void setServiceDescription(String serviceDescription) {
+        this.serviceDescription = serviceDescription;
+    }
 
     @Override
     public String toString() {
         return "ServiceRequest{" +
                 "id=" + id +
-                ", clientId=" + clientId +
-                ", vehicleId=" + vehicleId +
-                ", shopId=" + shopId +
-                ", mechanicId=" + mechanicId +
+                ", clientName='" + clientName + '\'' +
+                ", vehicleInfo='" + vehicleInfo + '\'' +
                 ", status='" + status + '\'' +
-                ", totalPriceEstimated=" + totalPriceEstimated +
-                ", totalPriceFinal=" + totalPriceFinal +
-                ", createdAt=" + createdAt +
                 '}';
     }
 }
-
-

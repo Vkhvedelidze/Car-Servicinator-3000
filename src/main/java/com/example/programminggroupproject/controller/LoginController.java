@@ -13,7 +13,6 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
-
 public class LoginController {
 
     @FXML
@@ -25,12 +24,10 @@ public class LoginController {
     @FXML
     private Label errorLabel;
 
-
     @FXML
     public void initialize() {
         errorLabel.setText("");
     }
-
 
     @FXML
     private void handleLogin() {
@@ -57,10 +54,10 @@ public class LoginController {
         System.out.println("Entered password: [" + password + "]");
     }
 
-
     private void navigateToDashboard(User user) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/programminggroupproject/dashboard.fxml"));
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/example/programminggroupproject/dashboard.fxml"));
             Scene dashboardScene = new Scene(loader.load(), 800, 600);
 
             String css = getClass().getResource("/com/example/programminggroupproject/styles.css").toExternalForm();
@@ -74,6 +71,29 @@ public class LoginController {
             stage.setTitle("Dashboard - Car Servicinator 3000");
         } catch (IOException e) {
             errorLabel.setText("Error loading dashboard");
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void handleRegister() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/example/programminggroupproject/register-view.fxml"));
+            Scene scene = new Scene(loader.load(), 800, 600);
+
+            // Load CSS if available
+            try {
+                String css = getClass().getResource("/com/example/programminggroupproject/styles.css").toExternalForm();
+                scene.getStylesheets().add(css);
+            } catch (Exception e) {
+                // Ignore
+            }
+
+            Stage stage = (Stage) usernameField.getScene().getWindow();
+            stage.setScene(scene);
+            stage.setTitle("Register - Car Servicinator 3000");
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
