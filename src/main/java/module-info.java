@@ -5,6 +5,7 @@ module com.example.programminggroupproject {
     requires org.kordamp.bootstrapfx.core;
     requires okhttp3;
     requires com.fasterxml.jackson.databind;
+    requires com.fasterxml.jackson.datatype.jsr310;
 
     opens com.example.programminggroupproject to javafx.fxml;
     opens com.example.programminggroupproject.controller to javafx.fxml;
