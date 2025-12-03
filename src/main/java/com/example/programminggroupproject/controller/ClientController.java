@@ -316,10 +316,8 @@ public class ClientController {
             request.setShopId(shopId);
             request.setStatus("Pending");
             request.setTotalPriceEstimated(budget); // Use budget as estimated price if available
-
-            // Store service description in helper field (will need ServiceRequestItem
-            // later)
             request.setServiceDescription(String.join(", ", services));
+            request.setNotes(notes);
 
             // Save to Supabase
             ServiceRequest createdRequest = serviceRequestService.create(request);

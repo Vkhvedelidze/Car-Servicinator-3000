@@ -52,6 +52,9 @@ public class MechanicController {
     @FXML
     private TableColumn<ServiceRequest, String> colDate;
 
+    @FXML
+    private TableColumn<ServiceRequest, String> colNotes;
+
     private ObservableList<ServiceRequest> masterData = FXCollections.observableArrayList();
     private final ServiceRequestService serviceRequestService = ServiceRequestService.getInstance();
     private final PaymentService paymentService = PaymentService.getInstance();
@@ -64,6 +67,7 @@ public class MechanicController {
         colClient.setCellValueFactory(new PropertyValueFactory<>("clientName"));
         colVehicle.setCellValueFactory(new PropertyValueFactory<>("vehicleInfo"));
         colService.setCellValueFactory(new PropertyValueFactory<>("serviceDescription"));
+        colNotes.setCellValueFactory(new PropertyValueFactory<>("notes"));
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         colDate.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
 
