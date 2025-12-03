@@ -16,6 +16,9 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import com.example.programminggroupproject.service.PaymentService;
+import com.example.programminggroupproject.model.Payment;
+import java.math.BigDecimal;
 
 public class MechanicController {
 
@@ -42,6 +45,7 @@ public class MechanicController {
 
     private ObservableList<ServiceRequest> masterData = FXCollections.observableArrayList();
     private final ServiceRequestService serviceRequestService = ServiceRequestService.getInstance();
+    private final PaymentService paymentService = PaymentService.getInstance();
 
     @FXML
     public void initialize() {
@@ -139,15 +143,20 @@ public class MechanicController {
         ServiceRequest selected = requestsTable.getSelectionModel().getSelectedItem();
         if (selected != null && "In Progress".equals(selected.getStatus())) {
             try {
-                // Update status to Completed in Supabase
+                // Update status to Completed
                 serviceRequestService.updateStatus(selected.getId(), "Completed");
-
-                // Refresh the list
+                
+                // Create payment for the completed service
+                Payment payment = new Payment();
+                payment.setServiceRequestId(selected.getId());
+                payment.setAmount(selected.getTotalPriceEstimated()); 
+                payment.setStatus("Pending");
+                paymentService.create(payment);
+                
                 loadServiceRequests();
                 requestsTable.refresh();
             } catch (Exception e) {
                 System.err.println("Error completing request: " + e.getMessage());
-                e.printStackTrace();
             }
         }
     }
