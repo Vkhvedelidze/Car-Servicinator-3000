@@ -9,41 +9,43 @@ import java.util.UUID;
 /**
  * ServiceRequest model matching the Supabase service_requests table schema.
  * Schema: id (UUID), client_id, vehicle_id, shop_id, mechanic_id, status,
- *         total_price_estimated, total_price_final, created_at
+ * total_price_estimated, total_price_final, created_at
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ServiceRequest {
 
     @JsonProperty("id")
     private UUID id;
-    
+
     @JsonProperty("client_id")
     private UUID clientId;
-    
+
     @JsonProperty("vehicle_id")
     private UUID vehicleId;
-    
+
     @JsonProperty("shop_id")
     private UUID shopId;
-    
+
     @JsonProperty("mechanic_id")
     private UUID mechanicId;
-    
+
     @JsonProperty("status")
     private String status;
-    
+
     @JsonProperty("total_price_estimated")
     private BigDecimal totalPriceEstimated;
-    
+
     @JsonProperty("total_price_final")
     private BigDecimal totalPriceFinal;
-    
+
     @JsonProperty("created_at")
     private OffsetDateTime createdAt;
 
     // Additional helper fields (not in database, for display purposes)
     private String clientName;
     private String vehicleInfo;
+
+    @JsonProperty("description")
     private String serviceDescription;
 
     // Default constructor for Jackson
@@ -52,7 +54,7 @@ public class ServiceRequest {
 
     // Constructor for creating new service requests (without ID and created_at)
     public ServiceRequest(UUID clientId, UUID vehicleId, UUID shopId, UUID mechanicId, String status,
-                          BigDecimal totalPriceEstimated, BigDecimal totalPriceFinal) {
+            BigDecimal totalPriceEstimated, BigDecimal totalPriceFinal) {
         this.clientId = clientId;
         this.vehicleId = vehicleId;
         this.shopId = shopId;
@@ -64,8 +66,8 @@ public class ServiceRequest {
 
     // Full constructor
     public ServiceRequest(UUID id, UUID clientId, UUID vehicleId, UUID shopId, UUID mechanicId,
-                          String status, BigDecimal totalPriceEstimated, BigDecimal totalPriceFinal,
-                          OffsetDateTime createdAt) {
+            String status, BigDecimal totalPriceEstimated, BigDecimal totalPriceFinal,
+            OffsetDateTime createdAt) {
         this.id = id;
         this.clientId = clientId;
         this.vehicleId = vehicleId;
