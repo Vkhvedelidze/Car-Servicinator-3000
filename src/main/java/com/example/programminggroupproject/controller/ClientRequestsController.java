@@ -1,7 +1,7 @@
 package com.example.programminggroupproject.controller;
 
 import com.example.programminggroupproject.model.ServiceRequest;
-import com.example.programminggroupproject.service.DataService;
+import com.example.programminggroupproject.service.ServiceRequestService;
 import com.example.programminggroupproject.session.Session;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -15,7 +15,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 public class ClientRequestsController {
@@ -24,7 +24,7 @@ public class ClientRequestsController {
     private TableView<ServiceRequest> requestsTable;
 
     @FXML
-    private TableColumn<ServiceRequest, Long> idColumn;
+    private TableColumn<ServiceRequest, String> idColumn;
 
     @FXML
     private TableColumn<ServiceRequest, String> vehicleColumn;
@@ -36,10 +36,12 @@ public class ClientRequestsController {
     private TableColumn<ServiceRequest, String> statusColumn;
 
     @FXML
-    private TableColumn<ServiceRequest, LocalDateTime> dateColumn;
+    private TableColumn<ServiceRequest, OffsetDateTime> dateColumn;
 
     @FXML
     private Label messageLabel;
+
+    private final ServiceRequestService serviceRequestService = ServiceRequestService.getInstance();
 
     @FXML
     public void initialize() {
@@ -60,16 +62,22 @@ public class ClientRequestsController {
             return;
         }
 
-        String clientName = Session.getCurrentUser().getFullName();
-        List<ServiceRequest> requests = DataService.getInstance().getServiceRequestsByClient(clientName);
+        try {
+            // Get requests by client ID from Supabase
+            List<ServiceRequest> requests = serviceRequestService.getByClientId(
+                    Session.getCurrentUser().getId());
 
-        ObservableList<ServiceRequest> requestList = FXCollections.observableArrayList(requests);
-        requestsTable.setItems(requestList);
+            ObservableList<ServiceRequest> requestList = FXCollections.observableArrayList(requests);
+            requestsTable.setItems(requestList);
 
-        if (requests.isEmpty()) {
-            messageLabel.setText("You have no service requests yet.");
-        } else {
-            messageLabel.setText("Showing " + requests.size() + " request(s)");
+            if (requests.isEmpty()) {
+                messageLabel.setText("You have no service requests yet.");
+            } else {
+                messageLabel.setText("Showing " + requests.size() + " request(s)");
+            }
+        } catch (Exception e) {
+            messageLabel.setText("Error loading requests: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

@@ -1,7 +1,7 @@
 package com.example.programminggroupproject.controller;
 
 import com.example.programminggroupproject.model.ServiceRequest;
-import com.example.programminggroupproject.service.DataService;
+import com.example.programminggroupproject.service.ServiceRequestService;
 import com.example.programminggroupproject.session.Session;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -26,37 +26,57 @@ public class AdminController {
     @FXML
     private BarChart<String, Number> revenueBarChart;
 
+    private final ServiceRequestService serviceRequestService = ServiceRequestService.getInstance();
+
     @FXML
     public void initialize() {
         loadAnalytics();
     }
 
     private void loadAnalytics() {
-        List<ServiceRequest> requests = DataService.getInstance().getAllServiceRequests();
+        try {
+            // Get all service requests from Supabase
+            List<ServiceRequest> requests = serviceRequestService.getAll();
 
-        // 1. Status Pie Chart
-        Map<String, Long> statusCounts = requests.stream()
-                .collect(Collectors.groupingBy(
-                        r -> r.getStatus() == null ? "Unknown" : r.getStatus(),
-                        Collectors.counting()));
+            // 1. Status Pie Chart
+            Map<String, Long> statusCounts = requests.stream()
+                    .collect(Collectors.groupingBy(
+                            r -> r.getStatus() == null ? "Unknown" : r.getStatus(),
+                            Collectors.counting()));
 
-        ObservableList<PieChart.Data> pieData = FXCollections.observableArrayList();
-        statusCounts.forEach((status, count) -> pieData.add(new PieChart.Data(status, count)));
-        statusPieChart.setData(pieData);
+            ObservableList<PieChart.Data> pieData = FXCollections.observableArrayList();
+            statusCounts.forEach((status, count) -> pieData.add(new PieChart.Data(status, count)));
+            statusPieChart.setData(pieData);
 
-        // 2. Revenue Bar Chart (Mock revenue based on service type count for now, or
-        // random)
-        // Since we don't have prices in the simple mock, let's just count service types
-        Map<String, Long> serviceCounts = requests.stream()
-                .collect(Collectors.groupingBy(
-                        r -> r.getServiceDescription() == null ? "Other" : r.getServiceDescription(),
-                        Collectors.counting()));
+            // 2. Service Description Bar Chart
+            Map<String, Long> serviceCounts = requests.stream()
+                    .filter(r -> r.getServiceDescription() != null && !r.getServiceDescription().isEmpty())
+                    .collect(Collectors.groupingBy(
+                            ServiceRequest::getServiceDescription,
+                            Collectors.counting()));
 
-        XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Service Counts");
-        serviceCounts.forEach((service, count) -> series.getData().add(new XYChart.Data<>(service, count)));
+            XYChart.Series<String, Number> series = new XYChart.Series<>();
+            series.setName("Service Counts");
 
-        revenueBarChart.getData().add(series);
+            // Limit to top 10 services for readability
+            serviceCounts.entrySet().stream()
+                    .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                    .limit(10)
+                    .forEach((entry) -> {
+                        String serviceName = entry.getKey();
+                        // Truncate long service names
+                        if (serviceName.length() > 30) {
+                            serviceName = serviceName.substring(0, 27) + "...";
+                        }
+                        series.getData().add(new XYChart.Data<>(serviceName, entry.getValue()));
+                    });
+
+            revenueBarChart.getData().add(series);
+
+        } catch (Exception e) {
+            System.err.println("Error loading analytics: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @FXML
