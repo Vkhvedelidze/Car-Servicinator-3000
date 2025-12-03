@@ -4,9 +4,11 @@ import com.example.programminggroupproject.model.ServiceRequest;
 import com.example.programminggroupproject.model.User;
 import com.example.programminggroupproject.model.Vehicle;
 import com.example.programminggroupproject.model.MechanicShop;
+import com.example.programminggroupproject.model.Service;
 import com.example.programminggroupproject.service.ServiceRequestService;
 import com.example.programminggroupproject.service.VehicleService;
 import com.example.programminggroupproject.service.MechanicShopService;
+import com.example.programminggroupproject.service.MechanicalService;
 import com.example.programminggroupproject.session.Session;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -17,7 +19,9 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class ClientController {
@@ -75,14 +79,19 @@ public class ClientController {
     @FXML
     private Label debugLabel;
 
+    @FXML
+    private Label totalPriceLabel;
+
     private ToggleGroup permissionGroup;
 
     private final ServiceRequestService serviceRequestService = ServiceRequestService.getInstance();
     private final VehicleService vehicleService = VehicleService.getInstance();
     private final MechanicShopService shopService = MechanicShopService.getInstance();
+    private final MechanicalService mechanicalService = MechanicalService.getInstance();
 
     private List<Vehicle> userVehicles;
     private List<MechanicShop> availableShops;
+    private Map<CheckBox, BigDecimal> servicePrices = new HashMap<>();
 
     @FXML
     public void initialize() {
@@ -94,6 +103,10 @@ public class ClientController {
 
         // Load data from Supabase
         loadVehiclesAndShops();
+
+        // Load service prices and add listeners
+        loadServicePrices();
+        setupPriceListeners();
     }
 
     private void loadVehiclesAndShops() {
@@ -135,6 +148,64 @@ public class ClientController {
             messageLabel.setText("Error loading data: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private void loadServicePrices() {
+        try {
+            List<Service> services = mechanicalService.getAll();
+            for (Service service : services) {
+                String name = service.getName().toLowerCase();
+                BigDecimal price = service.getBasePrice();
+
+                if (name.contains("oil")) {
+                    serviceOilCheck.setText("🔧 Oil & Filters - €" + price);
+                    servicePrices.put(serviceOilCheck, price);
+                } else if (name.contains("tire") || name.contains("alignment")) {
+                    serviceTiresCheck.setText("🛞 Tires & Alignment - €" + price);
+                    servicePrices.put(serviceTiresCheck, price);
+                } else if (name.contains("brake")) {
+                    serviceBrakesCheck.setText("🛑 Brakes - €" + price);
+                    servicePrices.put(serviceBrakesCheck, price);
+                } else if (name.contains("battery") || name.contains("electric")) {
+                    serviceBatteryCheck.setText("🔋 Battery & Electrical - €" + price);
+                    servicePrices.put(serviceBatteryCheck, price);
+                } else if (name.contains("fluid") || name.contains("leak")) {
+                    serviceFluidsCheck.setText("💧 Fluids & Leaks - €" + price);
+                    servicePrices.put(serviceFluidsCheck, price);
+                } else if (name.contains("engine") || name.contains("performance")) {
+                    serviceEnginePerfCheck.setText("⚙️ Engine Performance - €" + price);
+                    servicePrices.put(serviceEnginePerfCheck, price);
+                } else if (name.contains("clean") || name.contains("detail")) {
+                    serviceCleaningCheck.setText("🧽 Cleaning / Detailing - €" + price);
+                    servicePrices.put(serviceCleaningCheck, price);
+                } else if (name.contains("check") || name.contains("inspection") || name.contains("general")) {
+                    serviceCheckupCheck.setText("🔍 General Check-up - €" + price);
+                    servicePrices.put(serviceCheckupCheck, price);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading service prices: " + e.getMessage());
+        }
+    }
+
+    private void setupPriceListeners() {
+        CheckBox[] checkboxes = {serviceOilCheck, serviceTiresCheck, serviceBrakesCheck,
+                serviceBatteryCheck, serviceFluidsCheck, serviceEnginePerfCheck,
+                serviceCleaningCheck, serviceCheckupCheck};
+
+        for (CheckBox cb : checkboxes) {
+            cb.selectedProperty().addListener((obs, oldVal, newVal) -> updateTotalPrice());
+        }
+    }
+
+    private void updateTotalPrice() {
+        BigDecimal total = BigDecimal.ZERO;
+        for (Map.Entry<CheckBox, BigDecimal> entry : servicePrices.entrySet()) {
+            if (entry.getKey().isSelected()) {
+                total = total.add(entry.getValue());
+            }
+        }
+        totalPriceLabel.setText("Estimated Total: €" + total.setScale(2));
     }
 
     @FXML
@@ -245,10 +316,8 @@ public class ClientController {
             request.setShopId(shopId);
             request.setStatus("Pending");
             request.setTotalPriceEstimated(budget); // Use budget as estimated price if available
-
-            // Store service description in helper field (will need ServiceRequestItem
-            // later)
             request.setServiceDescription(String.join(", ", services));
+            request.setNotes(notes);
 
             // Save to Supabase
             ServiceRequest createdRequest = serviceRequestService.create(request);

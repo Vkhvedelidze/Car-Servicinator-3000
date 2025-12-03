@@ -20,6 +20,12 @@ import java.io.IOException;
 import java.util.stream.Collectors;
 import com.example.programminggroupproject.service.PaymentService;
 import com.example.programminggroupproject.model.Payment;
+import java.math.BigDecimal;
+import java.net.URL;
+import javafx.scene.control.Alert;
+import java.util.List;
+import javafx.scene.control.TextInputDialog;
+import java.util.Optional;
 
 public class MechanicController {
 
@@ -53,6 +59,8 @@ public class MechanicController {
 
     @FXML
     private Label filterResultsLabel;
+    @FXML
+    private TableColumn<ServiceRequest, String> colNotes;
 
     private ObservableList<ServiceRequest> masterData = FXCollections.observableArrayList();
     private List<ServiceRequest> allRequests; // Store all requests for filtering
@@ -68,6 +76,7 @@ public class MechanicController {
         colClient.setCellValueFactory(new PropertyValueFactory<>("clientName"));
         colVehicle.setCellValueFactory(new PropertyValueFactory<>("vehicleInfo"));
         colService.setCellValueFactory(new PropertyValueFactory<>("serviceDescription"));
+        colNotes.setCellValueFactory(new PropertyValueFactory<>("notes"));
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         colDate.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
 
@@ -287,7 +296,9 @@ public class MechanicController {
 
     @FXML
     private void handleAccept() {
-        ServiceRequest selected = requestsTable.getSelectionModel().getSelectedItem();
+        ServiceRequest selected = requestsTable.getSelectionModel
+        ().getSelectedItem();
+        
         if (selected != null && "Pending".equals(selected.getStatus())) {
             try {
                 serviceRequestService.assignMechanic(
@@ -320,39 +331,79 @@ public class MechanicController {
     @FXML
     private void handleComplete() {
         ServiceRequest selected = requestsTable.getSelectionModel().getSelectedItem();
+        System.out.println("Selected request: " + selected);
+        System.out.println("Status: " + (selected != null ? selected.getStatus() : "null"));
+
         if (selected != null && "In Progress".equals(selected.getStatus())) {
-            try {
-                // Update status to Completed
-                serviceRequestService.updateStatus(selected.getId(), "Completed");
-                
-                // Create payment for the completed service
-                Payment payment = new Payment();
-                payment.setServiceRequestId(selected.getId());
-                payment.setAmount(selected.getTotalPriceEstimated()); 
-                payment.setStatus("Pending");
-                paymentService.create(payment);
-                
-                loadServiceRequests();
-                requestsTable.refresh();
-            } catch (Exception e) {
-                System.err.println("Error completing request: " + e.getMessage());
+            // Show dialog to enter final price
+            TextInputDialog dialog = new TextInputDialog(
+                selected.getTotalPriceEstimated() != null 
+                    ? selected.getTotalPriceEstimated().toString() 
+                    : "0.00"
+            );
+            dialog.setTitle("Complete Service");
+            dialog.setHeaderText("Enter Final Price");
+            dialog.setContentText("Final price (€):");
+
+            Optional<String> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                try {
+                    BigDecimal finalPrice = new BigDecimal(result.get().replace(",", "."));
+                    
+                    if (finalPrice.compareTo(BigDecimal.ZERO) < 0) {
+                        showError("Price cannot be negative.");
+                        return;
+                    }
+
+                    // Update the service request with final price
+                    selected.setTotalPriceFinal(finalPrice);
+                    serviceRequestService.updateStatus(selected.getId(), "Completed");
+                    
+                    // Also update the final price in database
+                    ServiceRequest updated = serviceRequestService.get(selected.getId()).orElse(selected);
+                    updated.setTotalPriceFinal(finalPrice);
+                    serviceRequestService.update(selected.getId(), updated);
+
+                    // Create payment with the final price
+                    Payment payment = new Payment();
+                    payment.setServiceRequestId(selected.getId());
+                    payment.setAmount(finalPrice);  // Use final price entered by mechanic
+                    payment.setStatus("Pending");
+                    paymentService.create(payment);
+
+                    loadServiceRequests();
+                    requestsTable.refresh();
+                } catch (NumberFormatException e) {
+                    showError("Invalid price format. Please enter a valid number.");
+                } catch (Exception e) {
+                    showError("Error completing request: " + e.getMessage());
+                    e.printStackTrace();
+                }
             }
+        } else {
+            showError("Please select a request that is 'In Progress'.");
         }
     }
 
     @FXML
     private void handleBack() {
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/example/programminggroupproject/dashboard.fxml"));
+            URL fxmlUrl = getClass().getResource("/com/example/programminggroupproject/dashboard.fxml");
+            if (fxmlUrl == null) {
+                showError("Could not find dashboard.fxml");
+                return;
+            }
+            
+            FXMLLoader loader = new FXMLLoader(fxmlUrl);
             Scene scene = new Scene(loader.load(), 800, 600);
 
-            try {
-                String css = getClass().getResource("/com/example/programminggroupproject/styles.css").toExternalForm();
-                scene.getStylesheets().add(css);
-            } catch (Exception e) {
+            // Load CSS if available
+            URL cssUrl = getClass().getResource("/com/example/programminggroupproject/styles.css");
+            if (cssUrl != null) {
+                scene.getStylesheets().add(cssUrl.toExternalForm());
             }
 
+            // Set the current user in dashboard controller
             DashboardController controller = loader.getController();
             controller.setUser(Session.getCurrentUser());
 
@@ -360,7 +411,16 @@ public class MechanicController {
             stage.setScene(scene);
             stage.setTitle("Dashboard - Car Servicinator 3000");
         } catch (IOException e) {
+            // Use a logging framework in production
             e.printStackTrace();
+            showError("Failed to load dashboard: " + e.getMessage());
         }
+    }
+
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }

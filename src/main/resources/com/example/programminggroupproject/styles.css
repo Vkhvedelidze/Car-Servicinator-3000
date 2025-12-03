@@ -1,4 +1,4 @@
-/* Modern Color Scheme */
+/* Modern Color Scheme
 :root {
     --primary-color: #007bff;
     --primary-hover: #0056b3;
@@ -11,7 +11,7 @@
     --border-color: #dee2e6;
     --text-dark: #212529;
     --text-muted: #6c757d;
-}
+} */
 
 /* General Styling */
 .root {
@@ -23,10 +23,12 @@
 .button {
     -fx-background-radius: 6;
     -fx-cursor: hand;
+    cursor: hand;
     -fx-padding: 10 20;
     -fx-font-weight: bold;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 4, 0, 0, 2);
     -fx-transition: all 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 .button:hover {
@@ -102,6 +104,7 @@
 /* CheckBox Styling */
 .check-box {
     -fx-cursor: hand;
+    cursor: hand;
 }
 
 .check-box .box {
@@ -123,6 +126,7 @@
 /* RadioButton Styling */
 .radio-button {
     -fx-cursor: hand;
+    cursor: hand;
 }
 
 .radio-button .radio {
