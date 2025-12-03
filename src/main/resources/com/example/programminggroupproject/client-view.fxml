@@ -25,6 +25,7 @@
         <Button text="Back to Dashboard"
                 onAction="#handleBack"
                 style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-padding: 6 12;"/>
+        <Button text="View Payments" onAction="#handleViewPayments"/>
     </HBox>
 
     <!-- Content -->

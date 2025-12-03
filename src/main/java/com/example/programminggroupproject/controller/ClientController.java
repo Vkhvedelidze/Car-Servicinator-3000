@@ -306,4 +306,16 @@ public class ClientController {
             e.printStackTrace();
         }
     }
+
+    @FXML
+    private void handleViewPayments() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/programminggroupproject/payment-view.fxml"));
+            Scene scene = new Scene(loader.load(), 800, 600);
+            Stage stage = (Stage) vehicleComboBox.getScene().getWindow();
+            stage.setScene(scene);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

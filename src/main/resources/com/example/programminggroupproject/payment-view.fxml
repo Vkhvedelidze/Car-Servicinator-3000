@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<VBox alignment="TOP_CENTER" spacing="15" xmlns="http://javafx.com/javafx/21" 
+      xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="com.example.programminggroupproject.controller.PaymentController">
+    <padding>
+        <Insets bottom="20" left="20" right="20" top="20"/>
+    </padding>
+    
+    <Label text="My Payments">
+        <font><Font name="System Bold" size="24"/></font>
+    </Label>
+    
+    <TableView fx:id="paymentsTable" prefHeight="400">
+        <columns>
+            <TableColumn fx:id="colDescription" text="Service" prefWidth="250"/>
+            <TableColumn fx:id="colAmount" text="Amount" prefWidth="100"/>
+            <TableColumn fx:id="colStatus" text="Status" prefWidth="100"/>
+            <TableColumn fx:id="colDate" text="Date" prefWidth="150"/>
+        </columns>
+    </TableView>
+    
+    <HBox spacing="10" alignment="CENTER">
+        <Button fx:id="payButton" text="Pay Selected" onAction="#handlePay"/>
+        <Button fx:id="backButton" text="Back" onAction="#handleBack"/>
+    </HBox>
+    
+    <Label fx:id="messageLabel" text=""/>
+</VBox>
