@@ -1,6 +1,12 @@
 package com.example.programminggroupproject.controller;
 
+import com.example.programminggroupproject.model.ServiceRequest;
 import com.example.programminggroupproject.model.User;
+import com.example.programminggroupproject.model.Vehicle;
+import com.example.programminggroupproject.model.MechanicShop;
+import com.example.programminggroupproject.service.ServiceRequestService;
+import com.example.programminggroupproject.service.VehicleService;
+import com.example.programminggroupproject.service.MechanicShopService;
 import com.example.programminggroupproject.session.Session;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -9,8 +15,10 @@ import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class ClientController {
 
@@ -69,29 +77,69 @@ public class ClientController {
 
     private ToggleGroup permissionGroup;
 
+    private final ServiceRequestService serviceRequestService = ServiceRequestService.getInstance();
+    private final VehicleService vehicleService = VehicleService.getInstance();
+    private final MechanicShopService shopService = MechanicShopService.getInstance();
+
+    private List<Vehicle> userVehicles;
+    private List<MechanicShop> availableShops;
+
     @FXML
     public void initialize() {
-        // Placeholder data for now
-        vehicleComboBox.getItems().addAll(
-                "Toyota Corolla - ABC123",
-                "Honda Civic - XYZ789",
-                "BMW 3 Series - AAA111");
-        shopComboBox.getItems().addAll(
-                "Downtown Mechanic Shop",
-                "Highway Service Center",
-                "Premium Auto Care");
-
         // Group mechanic permissions
         permissionGroup = new ToggleGroup();
         permissionStrictRadio.setToggleGroup(permissionGroup);
         permissionExtraRadio.setToggleGroup(permissionGroup);
         permissionAskRadio.setToggleGroup(permissionGroup);
+
+        // Load data from Supabase
+        loadVehiclesAndShops();
+    }
+
+    private void loadVehiclesAndShops() {
+        User currentUser = Session.getCurrentUser();
+        if (currentUser == null) {
+            messageLabel.setStyle("-fx-text-fill: red;");
+            messageLabel.setText("No user logged in. Please log in again.");
+            return;
+        }
+
+        try {
+            // Load user's vehicles
+            userVehicles = vehicleService.getByClientId(currentUser.getId());
+            vehicleComboBox.getItems().clear();
+            for (Vehicle vehicle : userVehicles) {
+                String displayText = vehicle.getMake() + " " + vehicle.getModel() +
+                        " - " + vehicle.getLicensePlate();
+                vehicleComboBox.getItems().add(displayText);
+            }
+
+            if (userVehicles.isEmpty()) {
+                vehicleComboBox.setPromptText("No vehicles registered");
+            }
+
+            // Load available mechanic shops
+            availableShops = shopService.getAllOrderedByName();
+            shopComboBox.getItems().clear();
+            for (MechanicShop shop : availableShops) {
+                shopComboBox.getItems().add(shop.getName());
+            }
+
+            if (availableShops.isEmpty()) {
+                shopComboBox.setPromptText("No shops available");
+            }
+
+        } catch (Exception e) {
+            messageLabel.setStyle("-fx-text-fill: red;");
+            messageLabel.setText("Error loading data: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @FXML
     private void handleSubmit() {
-        String vehicle = vehicleComboBox.getValue();
-        String shop = shopComboBox.getValue();
+        String vehicleSelection = vehicleComboBox.getValue();
+        String shopSelection = shopComboBox.getValue();
 
         // Collect chosen services
         List<String> services = new ArrayList<>();
@@ -123,7 +171,7 @@ public class ClientController {
         String notes = notesArea.getText().trim();
 
         // ✅ Validation: vehicle & shop
-        if (vehicle == null || shop == null) {
+        if (vehicleSelection == null || shopSelection == null) {
             messageLabel.setStyle("-fx-text-fill: red;");
             messageLabel.setText("Please select a vehicle and a mechanic shop.");
             return;
@@ -144,6 +192,7 @@ public class ClientController {
         }
 
         String permissionDescription;
+        BigDecimal budget = null;
 
         if (permissionStrictRadio.isSelected()) {
             permissionDescription = "Only the selected services, nothing else.";
@@ -154,15 +203,14 @@ public class ClientController {
                 messageLabel.setText("Please set a € limit for extra work.");
                 return;
             }
-            double budget;
             try {
-                budget = Double.parseDouble(budgetText.replace(",", "."));
+                budget = new BigDecimal(budgetText.replace(",", "."));
             } catch (NumberFormatException e) {
                 messageLabel.setStyle("-fx-text-fill: red;");
                 messageLabel.setText("Invalid € limit. Use a number like 50 or 100.5");
                 return;
             }
-            if (budget < 0) {
+            if (budget.compareTo(BigDecimal.ZERO) < 0) {
                 messageLabel.setStyle("-fx-text-fill: red;");
                 messageLabel.setText("€ limit cannot be negative.");
                 return;
@@ -174,25 +222,56 @@ public class ClientController {
             permissionDescription = "Unknown permissions.";
         }
 
-        // Create ServiceRequest
-        com.example.programminggroupproject.model.ServiceRequest request = new com.example.programminggroupproject.model.ServiceRequest();
-        request.setClientName(
-                Session.getCurrentUser() != null ? Session.getCurrentUser().getFullName() : "Unknown Client");
-        request.setVehicleInfo(vehicle);
-        request.setServiceDescription(String.join(", ", services));
-        request.setStatus("Pending");
-        request.setCreatedAt(java.time.OffsetDateTime.now());
+        // Get the selected vehicle and shop IDs
+        int vehicleIndex = vehicleComboBox.getSelectionModel().getSelectedIndex();
+        int shopIndex = shopComboBox.getSelectionModel().getSelectedIndex();
 
-        // Save to DataService
-        com.example.programminggroupproject.service.DataService.getInstance().addServiceRequest(request);
+        if (vehicleIndex < 0 || shopIndex < 0) {
+            messageLabel.setStyle("-fx-text-fill: red;");
+            messageLabel.setText("Invalid selection. Please try again.");
+            return;
+        }
 
-        System.out.println("=== New service request saved ===");
-        System.out.println("Vehicle: " + vehicle);
-        System.out.println("Shop: " + shop);
+        UUID vehicleId = userVehicles.get(vehicleIndex).getId();
+        UUID shopId = availableShops.get(shopIndex).getId();
+        User currentUser = Session.getCurrentUser();
 
-        messageLabel.setStyle("-fx-text-fill: #28a745;");
-        messageLabel.setText("Service request submitted successfully!");
+        try {
+            // Create ServiceRequest with proper Supabase schema
+            ServiceRequest request = new ServiceRequest();
+            request.setClientId(currentUser.getId());
+            request.setVehicleId(vehicleId);
+            request.setShopId(shopId);
+            request.setStatus("Pending");
+            request.setTotalPriceEstimated(budget); // Use budget as estimated price if available
 
+            // Store service description in helper field (will need ServiceRequestItem
+            // later)
+            request.setServiceDescription(String.join(", ", services));
+
+            // Save to Supabase
+            ServiceRequest createdRequest = serviceRequestService.create(request);
+
+            System.out.println("=== New service request created ===");
+            System.out.println("Request ID: " + createdRequest.getId());
+            System.out.println("Vehicle: " + vehicleSelection);
+            System.out.println("Shop: " + shopSelection);
+            System.out.println("Services: " + String.join(", ", services));
+
+            messageLabel.setStyle("-fx-text-fill: #28a745;");
+            messageLabel.setText("Service request submitted successfully!");
+
+            // Clear form
+            clearForm();
+
+        } catch (Exception e) {
+            messageLabel.setStyle("-fx-text-fill: red;");
+            messageLabel.setText("Error submitting request: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void clearForm() {
         serviceOilCheck.setSelected(false);
         serviceTiresCheck.setSelected(false);
         serviceBrakesCheck.setSelected(false);

@@ -1,8 +1,7 @@
 package com.example.programminggroupproject.controller;
 
 import com.example.programminggroupproject.model.ServiceRequest;
-import com.example.programminggroupproject.model.User;
-import com.example.programminggroupproject.service.DataService;
+import com.example.programminggroupproject.service.ServiceRequestService;
 import com.example.programminggroupproject.session.Session;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -42,6 +41,7 @@ public class MechanicController {
     private TableColumn<ServiceRequest, String> colDate;
 
     private ObservableList<ServiceRequest> masterData = FXCollections.observableArrayList();
+    private final ServiceRequestService serviceRequestService = ServiceRequestService.getInstance();
 
     @FXML
     public void initialize() {
@@ -52,8 +52,8 @@ public class MechanicController {
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         colDate.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
 
-        // Load data
-        masterData.addAll(DataService.getInstance().getAllServiceRequests());
+        // Load data from Supabase
+        loadServiceRequests();
 
         // Wrap in FilteredList
         FilteredList<ServiceRequest> filteredData = new FilteredList<>(masterData, p -> true);
@@ -74,6 +74,10 @@ public class MechanicController {
                         && request.getVehicleInfo().toLowerCase().contains(lowerCaseFilter)) {
                     return true;
                 }
+                if (request.getServiceDescription() != null
+                        && request.getServiceDescription().toLowerCase().contains(lowerCaseFilter)) {
+                    return true;
+                }
                 return false;
             });
         });
@@ -81,12 +85,34 @@ public class MechanicController {
         requestsTable.setItems(filteredData);
     }
 
+    private void loadServiceRequests() {
+        try {
+            // Get all service requests from Supabase
+            masterData.clear();
+            masterData.addAll(serviceRequestService.getAll());
+        } catch (Exception e) {
+            System.err.println("Error loading service requests: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     @FXML
     private void handleAccept() {
         ServiceRequest selected = requestsTable.getSelectionModel().getSelectedItem();
         if (selected != null && "Pending".equals(selected.getStatus())) {
-            selected.setStatus("In Progress");
-            requestsTable.refresh();
+            try {
+                // Assign mechanic and update status in Supabase
+                serviceRequestService.assignMechanic(
+                        selected.getId(),
+                        Session.getCurrentUser().getId());
+
+                // Refresh the list
+                loadServiceRequests();
+                requestsTable.refresh();
+            } catch (Exception e) {
+                System.err.println("Error accepting request: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
     }
 
@@ -94,8 +120,17 @@ public class MechanicController {
     private void handleReject() {
         ServiceRequest selected = requestsTable.getSelectionModel().getSelectedItem();
         if (selected != null && "Pending".equals(selected.getStatus())) {
-            selected.setStatus("Rejected");
-            requestsTable.refresh();
+            try {
+                // Update status to Rejected in Supabase
+                serviceRequestService.updateStatus(selected.getId(), "Rejected");
+
+                // Refresh the list
+                loadServiceRequests();
+                requestsTable.refresh();
+            } catch (Exception e) {
+                System.err.println("Error rejecting request: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
     }
 
@@ -103,8 +138,17 @@ public class MechanicController {
     private void handleComplete() {
         ServiceRequest selected = requestsTable.getSelectionModel().getSelectedItem();
         if (selected != null && "In Progress".equals(selected.getStatus())) {
-            selected.setStatus("Completed");
-            requestsTable.refresh();
+            try {
+                // Update status to Completed in Supabase
+                serviceRequestService.updateStatus(selected.getId(), "Completed");
+
+                // Refresh the list
+                loadServiceRequests();
+                requestsTable.refresh();
+            } catch (Exception e) {
+                System.err.println("Error completing request: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
     }
 
