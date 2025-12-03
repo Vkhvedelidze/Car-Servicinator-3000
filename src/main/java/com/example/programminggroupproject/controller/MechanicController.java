@@ -1,7 +1,10 @@
 package com.example.programminggroupproject.controller;
 
 import com.example.programminggroupproject.model.ServiceRequest;
+import com.example.programminggroupproject.model.Vehicle;
 import com.example.programminggroupproject.service.ServiceRequestService;
+import com.example.programminggroupproject.service.UserService;
+import com.example.programminggroupproject.service.VehicleService;
 import com.example.programminggroupproject.session.Session;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -46,6 +49,8 @@ public class MechanicController {
     private ObservableList<ServiceRequest> masterData = FXCollections.observableArrayList();
     private final ServiceRequestService serviceRequestService = ServiceRequestService.getInstance();
     private final PaymentService paymentService = PaymentService.getInstance();
+    private final VehicleService vehicleService = VehicleService.getInstance();
+    private final UserService userService = UserService.getInstance();
 
     @FXML
     public void initialize() {
@@ -92,8 +97,53 @@ public class MechanicController {
     private void loadServiceRequests() {
         try {
             // Get all service requests from Supabase
+            List<ServiceRequest> requests = serviceRequestService.getAll();
+
+            // Populate display fields
+            for (ServiceRequest request : requests) {
+                // Try to fetch client name
+                if (request.getClientId() != null) {
+                    try {
+                        var userOptional = userService.get(request.getClientId());
+                        if (userOptional.isPresent()) {
+                            request.setClientName(userOptional.get().getFullName());
+                        } else {
+                            request.setClientName("Unknown Client");
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error fetching client (RLS issue?): " + e.getMessage());
+                        // Fallback to ID if name fetch fails
+                        request.setClientName("Client " + request.getClientId().toString().substring(0, 8));
+                    }
+                } else {
+                    request.setClientName("No Client");
+                }
+
+                // Fetch and set vehicle info
+                if (request.getVehicleId() != null) {
+                    try {
+                        var vehicleOptional = vehicleService.get(request.getVehicleId());
+
+                        if (vehicleOptional.isPresent()) {
+                            Vehicle vehicle = vehicleOptional.get();
+                            String vehicleInfo = vehicle.getMake() + " " + vehicle.getModel() +
+                                    " - " + vehicle.getLicensePlate();
+                            request.setVehicleInfo(vehicleInfo);
+                        } else {
+                            request.setVehicleInfo("Vehicle Not Found");
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error fetching vehicle: " + e.getMessage());
+                        request.setVehicleInfo("Error loading vehicle");
+                    }
+                } else {
+                    request.setVehicleInfo("No Vehicle");
+                }
+            }
+
             masterData.clear();
-            masterData.addAll(serviceRequestService.getAll());
+            masterData.addAll(requests);
+
         } catch (Exception e) {
             System.err.println("Error loading service requests: " + e.getMessage());
             e.printStackTrace();
@@ -105,12 +155,9 @@ public class MechanicController {
         ServiceRequest selected = requestsTable.getSelectionModel().getSelectedItem();
         if (selected != null && "Pending".equals(selected.getStatus())) {
             try {
-                // Assign mechanic and update status in Supabase
                 serviceRequestService.assignMechanic(
                         selected.getId(),
                         Session.getCurrentUser().getId());
-
-                // Refresh the list
                 loadServiceRequests();
                 requestsTable.refresh();
             } catch (Exception e) {
@@ -125,10 +172,7 @@ public class MechanicController {
         ServiceRequest selected = requestsTable.getSelectionModel().getSelectedItem();
         if (selected != null && "Pending".equals(selected.getStatus())) {
             try {
-                // Update status to Rejected in Supabase
                 serviceRequestService.updateStatus(selected.getId(), "Rejected");
-
-                // Refresh the list
                 loadServiceRequests();
                 requestsTable.refresh();
             } catch (Exception e) {
@@ -168,7 +212,6 @@ public class MechanicController {
                     getClass().getResource("/com/example/programminggroupproject/dashboard.fxml"));
             Scene scene = new Scene(loader.load(), 800, 600);
 
-            // Load CSS if available
             try {
                 String css = getClass().getResource("/com/example/programminggroupproject/styles.css").toExternalForm();
                 scene.getStylesheets().add(css);

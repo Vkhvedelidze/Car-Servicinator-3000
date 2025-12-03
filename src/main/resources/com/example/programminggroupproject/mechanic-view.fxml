@@ -30,7 +30,7 @@
         <columns>
             <TableColumn fx:id="colClient" text="Client" prefWidth="150.0" />
             <TableColumn fx:id="colVehicle" text="Vehicle" prefWidth="150.0" />
-            <TableColumn fx:id="colService" text="Service" prefWidth="200.0" />
+            <TableColumn fx:id="colService" text="Service" prefWidth="250.0" />
             <TableColumn fx:id="colStatus" text="Status" prefWidth="100.0" />
             <TableColumn fx:id="colDate" text="Date" prefWidth="150.0" />
         </columns>

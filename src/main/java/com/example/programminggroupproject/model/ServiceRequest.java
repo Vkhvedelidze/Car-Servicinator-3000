@@ -12,6 +12,7 @@ import java.util.UUID;
  * total_price_estimated, total_price_final, created_at
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
 public class ServiceRequest {
 
     @JsonProperty("id")
@@ -45,10 +46,11 @@ public class ServiceRequest {
     private String description;
 
     // Additional helper fields (not in database, for display purposes)
+    @JsonProperty("full_name")
     private String clientName;
     private String vehicleInfo;
 
-    @JsonProperty("description")
+    @JsonProperty("service_description")
     private String serviceDescription;
 
     // Default constructor for Jackson
