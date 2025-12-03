@@ -38,6 +38,34 @@
         <Label text="View all your submitted service requests"
                style="-fx-text-fill: #666;"/>
 
+        <!-- Filter Section -->
+        <HBox spacing="15" alignment="CENTER_LEFT" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8;">
+            <Label text="Filter:" style="-fx-font-weight: bold;"/>
+            
+            <!-- Status Filter -->
+            <VBox spacing="5">
+                <Label text="Status:" style="-fx-font-size: 11px;"/>
+                <ComboBox fx:id="statusFilterComboBox" prefWidth="150" promptText="All Statuses"/>
+            </VBox>
+            
+            <!-- Vehicle Search -->
+            <VBox spacing="5">
+                <Label text="Vehicle:" style="-fx-font-size: 11px;"/>
+                <ComboBox fx:id="vehicleFilterComboBox" prefWidth="200" promptText="All Vehicles"/>
+            </VBox>
+            
+            <!-- Search Field -->
+            <VBox spacing="5">
+                <Label text="Search:" style="-fx-font-size: 11px;"/>
+                <TextField fx:id="searchField" prefWidth="200" promptText="Search services..."/>
+            </VBox>
+            
+            <!-- Filter Buttons -->
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="Apply Filter" onAction="#handleApplyFilter" styleClass="button-primary"/>
+            <Button text="Clear" onAction="#handleClearFilter" styleClass="button-info"/>
+        </HBox>
+
         <!-- Table -->
         <TableView fx:id="requestsTable" VBox.vgrow="ALWAYS" prefHeight="400">
             <columns>
