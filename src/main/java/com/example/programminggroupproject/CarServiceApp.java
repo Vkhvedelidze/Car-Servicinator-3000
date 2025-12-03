@@ -6,13 +6,6 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.example.programminggroupproject.service.BaseSupabaseService;
-import com.example.programminggroupproject.service.UserService;
-
-
 public class CarServiceApp extends Application {
     @Override
     public void start(Stage stage) throws IOException {

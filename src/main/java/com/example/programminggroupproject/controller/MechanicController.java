@@ -26,7 +26,8 @@ import java.math.BigDecimal;
 import java.net.URL;
 import javafx.scene.control.Alert;
 import java.util.List;
-
+import javafx.scene.control.TextInputDialog;
+import java.util.Optional;
 
 public class MechanicController {
 
@@ -157,7 +158,9 @@ public class MechanicController {
 
     @FXML
     private void handleAccept() {
-        ServiceRequest selected = requestsTable.getSelectionModel().getSelectedItem();
+        ServiceRequest selected = requestsTable.getSelectionModel
+        ().getSelectedItem();
+        
         if (selected != null && "Pending".equals(selected.getStatus())) {
             try {
                 serviceRequestService.assignMechanic(
@@ -190,23 +193,57 @@ public class MechanicController {
     @FXML
     private void handleComplete() {
         ServiceRequest selected = requestsTable.getSelectionModel().getSelectedItem();
+        System.out.println("Selected request: " + selected);
+        System.out.println("Status: " + (selected != null ? selected.getStatus() : "null"));
+
         if (selected != null && "In Progress".equals(selected.getStatus())) {
-            try {
-                // Update status to Completed
-                serviceRequestService.updateStatus(selected.getId(), "Completed");
-                
-                // Create payment for the completed service
-                Payment payment = new Payment();
-                payment.setServiceRequestId(selected.getId());
-                payment.setAmount(selected.getTotalPriceEstimated()); 
-                payment.setStatus("Pending");
-                paymentService.create(payment);
-                
-                loadServiceRequests();
-                requestsTable.refresh();
-            } catch (Exception e) {
-                System.err.println("Error completing request: " + e.getMessage());
+            // Show dialog to enter final price
+            TextInputDialog dialog = new TextInputDialog(
+                selected.getTotalPriceEstimated() != null 
+                    ? selected.getTotalPriceEstimated().toString() 
+                    : "0.00"
+            );
+            dialog.setTitle("Complete Service");
+            dialog.setHeaderText("Enter Final Price");
+            dialog.setContentText("Final price (€):");
+
+            Optional<String> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                try {
+                    BigDecimal finalPrice = new BigDecimal(result.get().replace(",", "."));
+                    
+                    if (finalPrice.compareTo(BigDecimal.ZERO) < 0) {
+                        showError("Price cannot be negative.");
+                        return;
+                    }
+
+                    // Update the service request with final price
+                    selected.setTotalPriceFinal(finalPrice);
+                    serviceRequestService.updateStatus(selected.getId(), "Completed");
+                    
+                    // Also update the final price in database
+                    ServiceRequest updated = serviceRequestService.get(selected.getId()).orElse(selected);
+                    updated.setTotalPriceFinal(finalPrice);
+                    serviceRequestService.update(selected.getId(), updated);
+
+                    // Create payment with the final price
+                    Payment payment = new Payment();
+                    payment.setServiceRequestId(selected.getId());
+                    payment.setAmount(finalPrice);  // Use final price entered by mechanic
+                    payment.setStatus("Pending");
+                    paymentService.create(payment);
+
+                    loadServiceRequests();
+                    requestsTable.refresh();
+                } catch (NumberFormatException e) {
+                    showError("Invalid price format. Please enter a valid number.");
+                } catch (Exception e) {
+                    showError("Error completing request: " + e.getMessage());
+                    e.printStackTrace();
+                }
             }
+        } else {
+            showError("Please select a request that is 'In Progress'.");
         }
     }
 
