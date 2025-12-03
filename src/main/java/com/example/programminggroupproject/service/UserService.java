@@ -34,22 +34,17 @@ public class UserService extends BaseSupabaseService<User> {
     
     /**
      * Authenticate a user with email and password
+     * @deprecated Use SupabaseAuthService.signIn() instead for proper authentication
      * @param email The user's email
-     * @param password The password (will be compared against password_hash)
+     * @param password The password
      * @return Optional containing the User if authentication succeeds
      */
+    @Deprecated
     public Optional<User> authenticate(String email, String password) {
-        try {
-            // Note: In production, you should use Supabase Auth API and hash passwords
-            // This is simplified - assumes password is already hashed or for testing
-            List<User> users = filter("email", "eq", email);
-            
-            return users.stream()
-                    .filter(user -> user.getPasswordHash().equals(password))
-                    .findFirst();
-        } catch (Exception e) {
-            throw new RuntimeException("Authentication failed", e);
-        }
+        // This method is deprecated - authentication is now handled by Supabase Auth
+        // Use SupabaseAuthService.signIn() instead
+        System.err.println("Warning: UserService.authenticate() is deprecated. Use SupabaseAuthService.signIn() instead.");
+        return Optional.empty();
     }
     
     /**

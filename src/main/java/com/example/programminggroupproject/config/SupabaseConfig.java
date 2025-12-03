@@ -13,6 +13,7 @@ public class SupabaseConfig {
     private static SupabaseConfig instance;
     private final String url;
     private final String apiKey;
+    private final String anonKey;
     
     private SupabaseConfig() {
         Properties properties = new Properties();
@@ -26,10 +27,13 @@ public class SupabaseConfig {
             properties.load(input);
             this.url = properties.getProperty("supabase.url");
             this.apiKey = properties.getProperty("supabase.key");
+            this.anonKey = properties.getProperty("supabase.anon.key");
             
             if (url == null || apiKey == null) {
                 throw new RuntimeException("Supabase URL or API key not configured");
             }
+            
+
             
         } catch (IOException e) {
             throw new RuntimeException("Error loading Supabase configuration", e);
@@ -51,8 +55,16 @@ public class SupabaseConfig {
         return apiKey;
     }
     
+    public String getAnonKey() {
+        return anonKey;
+    }
+    
     public String getRestUrl() {
         return url + "/rest/v1";
+    }
+    
+    public String getAuthUrl() {
+        return url + "/auth/v1";
     }
 }
 

@@ -15,11 +15,11 @@ public class User {
     @JsonProperty("id")
     private UUID id;
     
+    @JsonProperty("auth_user_id")
+    private UUID authUserId;
+    
     @JsonProperty("email")
     private String email;
-    
-    @JsonProperty("password_hash")
-    private String passwordHash;
     
     @JsonProperty("full_name")
     private String fullName;
@@ -28,7 +28,7 @@ public class User {
     private String role;
     
     @JsonProperty("shop_id")
-    private Long shopId;
+    private UUID shopId;
     
     @JsonProperty("created_at")
     private OffsetDateTime createdAt;
@@ -38,19 +38,19 @@ public class User {
     }
 
     // Constructor for creating new users (without ID and created_at)
-    public User(String email, String passwordHash, String fullName, String role, Long shopId) {
+    public User(UUID authUserId, String email, String fullName, String role, UUID shopId) {
+        this.authUserId = authUserId;
         this.email = email;
-        this.passwordHash = passwordHash;
         this.fullName = fullName;
         this.role = role;
         this.shopId = shopId;
     }
     
     // Full constructor
-    public User(UUID id, String email, String passwordHash, String fullName, String role, Long shopId, OffsetDateTime createdAt) {
+    public User(UUID id, UUID authUserId, String email, String fullName, String role, UUID shopId, OffsetDateTime createdAt) {
         this.id = id;
+        this.authUserId = authUserId;
         this.email = email;
-        this.passwordHash = passwordHash;
         this.fullName = fullName;
         this.role = role;
         this.shopId = shopId;
@@ -65,20 +65,20 @@ public class User {
         this.id = id;
     }
 
+    public UUID getAuthUserId() {
+        return authUserId;
+    }
+
+    public void setAuthUserId(UUID authUserId) {
+        this.authUserId = authUserId;
+    }
+
     public String getEmail() {
         return email;
     }
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
     }
 
     public String getFullName() {
@@ -97,11 +97,11 @@ public class User {
         this.role = role;
     }
 
-    public Long getShopId() {
+    public UUID getShopId() {
         return shopId;
     }
 
-    public void setShopId(Long shopId) {
+    public void setShopId(UUID shopId) {
         this.shopId = shopId;
     }
 

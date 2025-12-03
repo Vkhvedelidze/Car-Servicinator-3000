@@ -1,6 +1,7 @@
 package com.example.programminggroupproject.client;
 
 import com.example.programminggroupproject.config.SupabaseConfig;
+import com.example.programminggroupproject.session.Session;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -13,6 +14,7 @@ import java.util.Map;
 /**
  * Enhanced Supabase HTTP client for REST API operations.
  * Handles all HTTP communication with Supabase PostgREST API.
+ * Automatically adds JWT tokens for authenticated requests.
  */
 public class SupabaseClient {
     
@@ -42,17 +44,28 @@ public class SupabaseClient {
     
     /**
      * Interceptor to add authentication headers to all requests
+     * Uses JWT token from session if available, otherwise uses service role key
      */
     private class SupabaseInterceptor implements Interceptor {
         @Override
         public Response intercept(Chain chain) throws IOException {
             Request original = chain.request();
-            Request request = original.newBuilder()
+            Request.Builder requestBuilder = original.newBuilder()
                     .addHeader("apikey", config.getApiKey())
-                    .addHeader("Authorization", "Bearer " + config.getApiKey())
                     .addHeader("Content-Type", "application/json")
-                    .addHeader("Prefer", "return=representation")
-                    .build();
+                    .addHeader("Prefer", "return=representation");
+            
+            // Use JWT token if user is authenticated, otherwise use service role key
+            String accessToken = Session.getAccessToken();
+            if (accessToken != null && !accessToken.isEmpty()) {
+                // Use user's JWT token for authenticated requests
+                requestBuilder.addHeader("Authorization", "Bearer " + accessToken);
+            } else {
+                // Use service role key for unauthenticated requests
+                requestBuilder.addHeader("Authorization", "Bearer " + config.getApiKey());
+            }
+            
+            Request request = requestBuilder.build();
             return chain.proceed(request);
         }
     }

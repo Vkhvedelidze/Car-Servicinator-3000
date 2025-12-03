@@ -28,12 +28,12 @@
 
     <VBox spacing="15.0" alignment="CENTER" maxWidth="350" style="-fx-background-color: white; -fx-padding: 30; -fx-background-radius: 10;">
         
-        <Label text="Username:">
+        <Label text="Email:">
             <font>
                 <Font size="14.0"/>
             </font>
         </Label>
-        <TextField fx:id="usernameField" promptText="Enter username" prefWidth="300"/>
+        <TextField fx:id="usernameField" promptText="Enter email address" prefWidth="300"/>
 
         <Label text="Password:">
             <font>
@@ -57,7 +57,7 @@
 
     <Region VBox.vgrow="SOMETIMES"/>
     
-    <Label text="Test users: client/client123, mechanic/mechanic123, admin/admin123" 
+    <Label text="Register a new account to get started" 
            style="-fx-text-fill: #666; -fx-font-size: 11px;"/>
 </VBox>
 

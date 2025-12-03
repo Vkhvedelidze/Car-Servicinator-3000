@@ -48,7 +48,20 @@ public class RegisterController {
             return;
         }
 
-        // TODO: In production, hash the password before storing
+        // Validate email format
+        if (!isValidEmail(email)) {
+            messageLabel.setText("Please enter a valid email address (e.g., user@example.com)");
+            messageLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
+        // Validate password length
+        if (password.length() < 6) {
+            messageLabel.setText("Password must be at least 6 characters long.");
+            messageLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
         boolean success = AuthService.register(email, password, fullName, role);
 
         if (success) {
@@ -59,9 +72,17 @@ public class RegisterController {
             usernameField.clear();
             passwordField.clear();
         } else {
-            messageLabel.setText("Email already exists or registration failed.");
+            messageLabel.setText("Email already exists or registration failed. Check console for details.");
             messageLabel.setStyle("-fx-text-fill: red;");
         }
+    }
+
+    /**
+     * Validate email format
+     */
+    private boolean isValidEmail(String email) {
+        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+        return email != null && email.matches(emailRegex);
     }
 
     @FXML

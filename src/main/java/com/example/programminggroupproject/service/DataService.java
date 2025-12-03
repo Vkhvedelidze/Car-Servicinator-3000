@@ -28,11 +28,10 @@ public class DataService {
     }
 
     private void initializeMockData() {
-        // Mock Users
-        users.add(new User("client", "client123", "client", "Client User", "client@example.com"));
-        users.add(new User("mechanic", "mechanic123", "mechanic", "Mechanic User", "mechanic@example.com"));
-        users.add(new User("admin", "admin123", "admin", "Admin User", "admin@example.com"));
-
+        // Mock Users - DEPRECATED: Now using Supabase Auth
+        // Users should be created via the registration flow which uses Supabase Auth
+        // Keeping empty list for backward compatibility
+        
         // Mock Service Requests
         ServiceRequest req1 = new ServiceRequest();
         req1.setId(1L);
@@ -53,16 +52,20 @@ public class DataService {
         serviceRequests.add(req2);
     }
 
-    // User Methods
-    public Optional<User> authenticate(String username, String password) {
+    // User Methods - DEPRECATED: Now using Supabase Auth via AuthService
+    @Deprecated
+    public Optional<User> authenticate(String email, String password) {
+        // This method is deprecated - use AuthService.authenticate() instead
         return users.stream()
-                .filter(u -> u.getUsername().equals(username) && u.getPassword().equals(password))
+                .filter(u -> u.getEmail().equals(email))
                 .findFirst();
     }
 
+    @Deprecated
     public boolean registerUser(User user) {
-        if (users.stream().anyMatch(u -> u.getUsername().equals(user.getUsername()))) {
-            return false; // Username exists
+        // This method is deprecated - use AuthService.register() instead
+        if (users.stream().anyMatch(u -> u.getEmail().equals(user.getEmail()))) {
+            return false; // Email exists
         }
         users.add(user);
         return true;

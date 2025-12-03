@@ -21,8 +21,8 @@
     </Label>
 
     <TextField fx:id="fullNameField" promptText="Full Name" maxWidth="300.0"/>
-    <TextField fx:id="usernameField" promptText="Username" maxWidth="300.0"/>
-    <PasswordField fx:id="passwordField" promptText="Password" maxWidth="300.0"/>
+    <TextField fx:id="usernameField" promptText="Email (e.g., user@example.com)" maxWidth="300.0"/>
+    <PasswordField fx:id="passwordField" promptText="Password (min 6 characters)" maxWidth="300.0"/>
     
     <ComboBox fx:id="roleComboBox" promptText="Select Role" maxWidth="300.0"/>
 
