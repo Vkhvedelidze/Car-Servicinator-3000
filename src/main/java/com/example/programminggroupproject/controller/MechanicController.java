@@ -211,16 +211,18 @@ public class MechanicController {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/example/programminggroupproject/dashboard.fxml"));
             Scene scene = new Scene(loader.load(), 800, 600);
-
+    
+            // Load CSS if available
             try {
                 String css = getClass().getResource("/com/example/programminggroupproject/styles.css").toExternalForm();
                 scene.getStylesheets().add(css);
             } catch (Exception e) {
             }
-
+    
+            // Set the current user in dashboard controller
             DashboardController controller = loader.getController();
             controller.setUser(Session.getCurrentUser());
-
+    
             Stage stage = (Stage) requestsTable.getScene().getWindow();
             stage.setScene(scene);
             stage.setTitle("Dashboard - Car Servicinator 3000");
@@ -228,4 +230,3 @@ public class MechanicController {
             e.printStackTrace();
         }
     }
-}
