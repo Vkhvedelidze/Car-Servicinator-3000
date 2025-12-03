@@ -1,7 +1,9 @@
 package com.example.programminggroupproject.controller;
 
 import com.example.programminggroupproject.model.ServiceRequest;
+import com.example.programminggroupproject.model.Vehicle;
 import com.example.programminggroupproject.service.ServiceRequestService;
+import com.example.programminggroupproject.service.VehicleService;
 import com.example.programminggroupproject.session.Session;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -42,6 +44,7 @@ public class ClientRequestsController {
     private Label messageLabel;
 
     private final ServiceRequestService serviceRequestService = ServiceRequestService.getInstance();
+    private final VehicleService vehicleService = VehicleService.getInstance();
 
     @FXML
     public void initialize() {
@@ -56,26 +59,33 @@ public class ClientRequestsController {
         loadClientRequests();
     }
 
+
     private void loadClientRequests() {
         if (Session.getCurrentUser() == null) {
             messageLabel.setText("No user logged in");
             return;
         }
-
+    
         try {
-            // Get requests by client ID from Supabase
             List<ServiceRequest> requests = serviceRequestService.getByClientId(
                     Session.getCurrentUser().getId());
-
+    
+            // Enrich with vehicle info
+            for (ServiceRequest request : requests) {
+                if (request.getVehicleId() != null) {
+                    // Fetch vehicle details
+                    Vehicle vehicle = vehicleService.get(request.getVehicleId()).orElse(null);
+                    if (vehicle != null) {
+                        request.setVehicleInfo(vehicle.getMake() + " " + vehicle.getModel() + 
+                                             " - " + vehicle.getLicensePlate());
+                    }
+                }
+            }
+    
             ObservableList<ServiceRequest> requestList = FXCollections.observableArrayList(requests);
             requestsTable.setItems(requestList);
-
-            if (requests.isEmpty()) {
-                messageLabel.setText("You have no service requests yet.");
-            } else {
-                messageLabel.setText("Showing " + requests.size() + " request(s)");
-            }
         } catch (Exception e) {
+            messageLabel.setStyle("-fx-text-fill: red;");
             messageLabel.setText("Error loading requests: " + e.getMessage());
             e.printStackTrace();
         }
