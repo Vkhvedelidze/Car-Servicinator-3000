@@ -71,6 +71,10 @@
                           text="🧪 General check-up"/>
             </VBox>
 
+            <Label fx:id="totalPriceLabel" 
+            text="Estimated Total: €0.00" 
+            style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #007bff;"/>
+
             <!-- Mechanic permissions -->
             <Label text="Mechanic permissions" />
 

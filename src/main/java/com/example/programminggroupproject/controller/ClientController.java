@@ -294,6 +294,12 @@ public class ClientController {
             permissionDescription = "Unknown permissions.";
         }
 
+        // Combine permission info with user notes
+        String fullNotes = "📋 PERMISSIONS: " + permissionDescription;
+        if (!notes.isEmpty()) {
+            fullNotes += "\n\n📝 CLIENT NOTES: " + notes;
+        }
+
         // Calculate total price from selected services
         BigDecimal totalEstimated = BigDecimal.ZERO;
         for (Map.Entry<CheckBox, BigDecimal> entry : servicePrices.entrySet()) {
@@ -323,9 +329,9 @@ public class ClientController {
             request.setVehicleId(vehicleId);
             request.setShopId(shopId);
             request.setStatus("Pending");
-            request.setTotalPriceEstimated(totalEstimated);  // Use calculated total!
+            request.setTotalPriceEstimated(totalEstimated);
             request.setServiceDescription(String.join(", ", services));
-            request.setNotes(notes);
+            request.setNotes(fullNotes);  // Use combined notes with permissions
 
             // Save to Supabase
             ServiceRequest createdRequest = serviceRequestService.create(request);
