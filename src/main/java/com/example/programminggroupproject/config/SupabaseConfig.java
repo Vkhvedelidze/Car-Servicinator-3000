@@ -29,8 +29,8 @@ public class SupabaseConfig {
             this.apiKey = properties.getProperty("supabase.key");
             this.anonKey = properties.getProperty("supabase.anon.key");
             
-            if (url == null || apiKey == null) {
-                throw new RuntimeException("Supabase URL or API key not configured");
+            if (url == null || apiKey == null || anonKey == null) {
+                throw new RuntimeException("Supabase URL, API key, or anon key not configured");
             }
             
 
