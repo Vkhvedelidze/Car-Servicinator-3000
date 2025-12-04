@@ -504,6 +504,9 @@ CompletableFuture<T> createAsync(T object)
 
 #### 3. **"Invalid login credentials"**
 **Solution**: Register a new account first before attempting to log in
+or use these credentials: vako@example.com for client and password "testpass123_".
+dsokolov@gmail.com and password "Password1".
+admin@example.com for admin and password "testpass123_".
 
 #### 4. **Connection timeout**
 **Solution**: Check your internet connection and Supabase project status
@@ -530,30 +533,10 @@ CompletableFuture<T> createAsync(T object)
 
 ## 👨‍💻 Contributors
 
-- **Your Name** - Developer
-- **Team Members** - Contributors
+- **Team Members** - Michail Sifakis, Denis Sokolov, Vako Khvedelidze, Gonzalo Nicolas, Oliver Holmes
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- **Supabase** - For providing an excellent backend platform
-- **JavaFX Community** - For comprehensive documentation
-- **OkHttp** - For reliable HTTP client library
-- **Jackson** - For efficient JSON processing
-
----
-
-## 📞 Support
-
-For issues, questions, or contributions:
-- 📧 Email: support@carservicinator3000.com
 - 🐛 Issues: [GitHub Issues](https://github.com/yourusername/Car-Servicinator-3000/issues)
 - 💬 Discussions: [GitHub Discussions](https://github.com/yourusername/Car-Servicinator-3000/discussions)
 
