@@ -1,550 +1,218 @@
-# 🚗 Car Servicinator 3000
+﻿# Car Servicinator 3000
 
-A comprehensive car service management system built with JavaFX and Supabase. This application streamlines the interaction between clients, mechanics, and administrators in a car service environment.
+A Java 21 desktop application for managing car service requests, built with JavaFX and Supabase. Clients request work for existing vehicles, mechanics manage requests, and administrators review operational and revenue summaries.
 
-![Java](https://img.shields.io/badge/Java-21-orange?style=flat-square&logo=openjdk)
-![JavaFX](https://img.shields.io/badge/JavaFX-21.0.6-blue?style=flat-square)
-![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green?style=flat-square)
-![Maven](https://img.shields.io/badge/Maven-3.x-red?style=flat-square)
+The repository contains the desktop application and local tests. Running it against a backend requires an existing Supabase database that matches the application models; database migrations and access policies are not included.
 
----
+## Application workflow
 
-## 📋 Table of Contents
+| Role | Available functionality |
+| --- | --- |
+| Client | Choose an existing vehicle and shop, select catalog services, review an estimate, submit a request, filter request history, and view payment records. |
+| Mechanic | Filter requests, accept or reject pending work, complete an assigned request with a final price, and create its payment record. |
+| Admin | View request counts, status distribution, completed payment totals, and revenue charts. |
 
-- [Features](#-features)
-- [Technologies Used](#-technologies-used)
-- [Architecture & Design Patterns](#-architecture--design-patterns)
-- [Project Structure](#-project-structure)
-- [Prerequisites](#-prerequisites)
-- [Installation & Setup](#-installation--setup)
-- [Running the Application](#-running-the-application)
-- [Database Schema](#-database-schema)
-- [User Roles](#-user-roles)
-- [OOP Concepts Demonstrated](#-oop-concepts-demonstrated)
-- [API Documentation](#-api-documentation)
-- [Contributors](#-contributors)
+Registration offers client and mechanic accounts. An administrator account and any required shop assignments must be provisioned through the backend.
 
----
+The payment screen marks database payment records as completed. It does not charge a card or connect to a payment provider. There is no vehicle registration or editing screen; vehicles must already exist in the backend.
 
-## ✨ Features
+### Service requests and pricing
 
-### 👤 Client Features
-- **User Registration & Authentication** - Secure signup/login with JWT tokens
-- **Vehicle Management** - Add, edit, and manage multiple vehicles
-- **Service Requests** - Request car services from mechanic shops
-- **Request Tracking** - View status of service requests in real-time
-- **Payment Processing** - Secure payment handling for completed services
-- **Service History** - View past service records and invoices
+![Service request screen showing catalog services, selections, and the estimated total](docs/images/service-request.png)
 
-### 🔧 Mechanic Features
-- **Service Request Dashboard** - View and manage incoming service requests
-- **Request Filtering** - Filter by status, client, or search terms
-- **Service Management** - Accept, reject, or complete service requests
-- **Status Updates** - Provide real-time updates to clients
-- **Client Communication** - Add notes and communicate service details
+Request form preview using synthetic test data.
 
-### 👨‍💼 Admin Features
-- **Analytics Dashboard** - View business metrics and statistics
-- **User Management** - Manage clients, mechanics, and shops
-- **Service Oversight** - Monitor all service requests across the system
-- **Payment Tracking** - View payment history and financial reports
-- **System Configuration** - Configure services and pricing
+The request form loads vehicles, shops, and services from Supabase in the background. It presents loading, empty, and error states, with retry when loading fails.
 
----
+- Services are identified by UUID, so duplicate names remain distinct.
+- An immutable catalog snapshot supplies both the displayed estimate and the saved estimate.
+- Prices use `BigDecimal`. Missing, negative, or fractional-cent prices are unavailable; zero is valid.
+- Submission requires a signed-in client, vehicle, shop, and at least one available service.
+- Saving runs in the background and disables repeat submission while a write is pending.
+- A failed save preserves the form. If the result is uncertain, check existing requests before retrying.
 
-## 🛠 Technologies Used
+The current submission writes a `service_requests` record with a description and estimated total. It does not create `service_request_items` rows. The desktop estimate is not an authoritative server-side price calculation.
 
-### Core Technologies
-- **Java 21** - Latest LTS version with modern language features
-- **JavaFX 21.0.6** - Modern UI framework for desktop applications
-- **Maven** - Dependency management and build automation
+## Technology
 
-### Backend & Database
-- **Supabase** - Backend-as-a-Service with PostgreSQL database
-- **PostgreSQL** - Robust relational database
-- **Supabase Auth** - Authentication and authorization with JWT
-- **Row Level Security (RLS)** - Database-level security policies
+| Component | Implementation |
+| --- | --- |
+| Runtime | Java 21 |
+| Desktop UI | JavaFX 21.0.6, FXML, CSS |
+| Backend access | Supabase Auth and PostgreSQL through the REST API |
+| HTTP and JSON | OkHttp 4.12.0 and Jackson 2.17.2 |
+| Build | Maven wrapper, compiler plugin, JavaFX plugin, Shade plugin |
+| Tests | JUnit 5 with Maven Surefire |
 
-### HTTP & Networking
-- **OkHttp 4.12.0** - Modern HTTP client for API communication
-- **Jackson 2.17.2** - JSON serialization/deserialization
-- **Custom Interceptors** - Automatic authentication header injection
+Dependency and plugin versions are defined in [pom.xml](pom.xml). The Maven wrapper downloads Maven 3.8.5; a separate Maven installation is not required.
 
-### Security
-- **BCrypt** - Password hashing
-- **JWT (JSON Web Tokens)** - Secure session management
-- **Auth0 Java-JWT** - JWT parsing and validation
+## Getting started
 
-### UI
-- **FXML** - Declarative UI design
-- **BootstrapFX** - Modern styling framework
-- **Custom CSS** - Enhanced visual design
+### 1. Prepare the environment
 
----
+Install JDK 21, set `JAVA_HOME` to its installation directory, and ensure Java is on your `PATH`. A graphical desktop is required to run the app and JavaFX controller tests. The first build needs network access to download Maven and dependencies.
 
-## 🏗 Architecture & Design Patterns
+Clone the repository and enter its directory:
 
-### **1. Model-View-Controller (MVC)**
-```
-┌─────────────┐         ┌──────────────┐         ┌─────────────┐
-│    View     │ ───────>│ Controller   │ ───────>│    Model    │
-│   (FXML)    │ <───────│   (Java)     │ <───────│   (Java)    │
-└─────────────┘         └──────────────┘         └─────────────┘
-```
-- **View**: FXML files define UI structure
-- **Controller**: Handle user interactions and business logic
-- **Model**: Data entities (User, Vehicle, ServiceRequest, etc.)
-
-### **2. Service Layer Pattern**
-```
-Controller → Service Layer → Supabase Client → Supabase API
-```
-- Separates business logic from data access
-- Provides reusable CRUD operations
-- Centralizes database interactions
-
-### **3. Repository Pattern**
-- Generic `Service<T>` interface defines standard operations
-- `BaseSupabaseService<T>` implements common functionality
-- Concrete services extend base class for specific entities
-
-### **4. Singleton Pattern**
-- Used for services: `UserService.getInstance()`
-- Ensures single instance of database clients
-- Efficient resource management
-
-### **5. Interceptor Pattern**
-- `SupabaseInterceptor`: Adds authentication headers to all REST API requests
-- `AuthInterceptor`: Handles authentication API headers
-- Implements cross-cutting concerns (authentication, logging)
-
-### **6. Facade Pattern**
-- `AuthService` provides simplified interface to `SupabaseAuthService`
-- Maintains backward compatibility
-- Simplifies complex subsystems
-
----
-
-## 📁 Project Structure
-
-```
-Car-Servicinator-3000/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/example/programminggroupproject/
-│   │   │       ├── CarServiceApp.java          # Application entry point
-│   │   │       ├── Launcher.java               # JavaFX launcher
-│   │   │       ├── client/                     # HTTP clients
-│   │   │       │   ├── SupabaseAuthClient.java # Authentication API
-│   │   │       │   └── SupabaseClient.java     # REST API client
-│   │   │       ├── config/                     # Configuration
-│   │   │       │   └── SupabaseConfig.java     # Supabase credentials
-│   │   │       ├── controller/                 # MVC Controllers
-│   │   │       │   ├── LoginController.java
-│   │   │       │   ├── RegisterController.java
-│   │   │       │   ├── DashboardController.java
-│   │   │       │   ├── ClientController.java
-│   │   │       │   ├── ClientRequestsController.java
-│   │   │       │   ├── MechanicController.java
-│   │   │       │   ├── PaymentController.java
-│   │   │       │   └── AdminController.java
-│   │   │       ├── model/                      # Data models
-│   │   │       │   ├── User.java
-│   │   │       │   ├── Vehicle.java
-│   │   │       │   ├── Service.java
-│   │   │       │   ├── ServiceRequest.java
-│   │   │       │   ├── ServiceRequestItem.java
-│   │   │       │   ├── Payment.java
-│   │   │       │   ├── MechanicShop.java
-│   │   │       │   └── AuthResponse.java
-│   │   │       ├── service/                    # Service layer
-│   │   │       │   ├── Service.java            # Generic interface
-│   │   │       │   ├── BaseSupabaseService.java # Base implementation
-│   │   │       │   ├── AuthService.java
-│   │   │       │   ├── SupabaseAuthService.java
-│   │   │       │   ├── UserService.java
-│   │   │       │   ├── VehicleService.java
-│   │   │       │   ├── MechanicalService.java
-│   │   │       │   ├── ServiceRequestService.java
-│   │   │       │   ├── PaymentService.java
-│   │   │       │   └── MechanicShopService.java
-│   │   │       └── session/                    # Session management
-│   │   │           └── Session.java
-│   │   └── resources/
-│   │       └── com/example/programminggroupproject/
-│   │           ├── login-view.fxml
-│   │           ├── register-view.fxml
-│   │           ├── dashboard.fxml
-│   │           ├── client-view.fxml
-│   │           ├── client-requests-view.fxml
-│   │           ├── mechanic-view.fxml
-│   │           ├── payment-view.fxml
-│   │           ├── admin-view.fxml
-│   │           ├── styles.css
-│   │           └── supabase.properties         # Database credentials
-│   └── test/
-├── pom.xml                                     # Maven configuration
-└── README.md
-```
-
----
-
-## 📦 Prerequisites
-
-Before running this application, ensure you have:
-
-- **Java Development Kit (JDK) 21** or higher
-- **Maven 3.6+**
-- **Supabase Account** (free tier available)
-- **Git** (for cloning the repository)
-
----
-
-## 🚀 Installation & Setup
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/yourusername/Car-Servicinator-3000.git
+```sh
+git clone https://github.com/Vkhvedelidze/Car-Servicinator-3000.git
 cd Car-Servicinator-3000
 ```
 
-### 2. Set Up Supabase
+Windows PowerShell, adjusting the installation path:
 
-1. Create a free account at [supabase.com](https://supabase.com)
-2. Create a new project
-3. Navigate to **Settings → API** to find your credentials
-4. Create the database schema (see [Database Schema](#-database-schema))
-5. Enable Row Level Security (RLS) on all tables
-6. Set up authentication triggers (optional but recommended)
+```powershell
+$env:JAVA_HOME = 'C:\Program Files\Java\jdk-21'
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+.\mvnw.cmd -version
+```
 
-### 3. Configure Application
+macOS or Linux, using your installed JDK's directory:
 
-Edit `src/main/resources/supabase.properties`:
+```sh
+export JAVA_HOME="/path/to/jdk-21"
+export PATH="$JAVA_HOME/bin:$PATH"
+chmod +x mvnw
+./mvnw -version
+```
+
+Confirm that the wrapper reports Java 21 before continuing. These environment assignments apply to the current shell.
+
+### 2. Configure the backend connection
+
+Create `src/main/resources/supabase.properties`:
 
 ```properties
-# Supabase Configuration
-supabase.url=https://your-project.supabase.co
-supabase.key=your-service-role-key
-supabase.anon.key=your-anon-public-key
+supabase.url=https://YOUR_PROJECT.supabase.co
+supabase.key=YOUR_PUBLIC_ANON_KEY
+supabase.anon.key=YOUR_PUBLIC_ANON_KEY
 ```
 
-⚠️ **Security Note**: Never commit your actual credentials to version control. Use environment variables for production.
+Use the same public Supabase `anon` key for both key properties. The REST client currently reads `supabase.key`, while the Auth client reads `supabase.anon.key`.
 
-### 4. Install Dependencies
-```bash
-mvn clean install
+The file is ignored by Git. Configuration is loaded from this classpath resource; environment-variable overrides are not implemented. Maven copies the file into build output and packaged artifacts, so never place a privileged `service_role` key or other backend secret in it.
+
+A connection file alone does not provision a working backend. Read the database contract and authentication limitation below before connecting to a project.
+
+### 3. Run the application
+
+Windows PowerShell:
+
+```powershell
+.\mvnw.cmd clean javafx:run
 ```
 
----
+macOS or Linux:
 
-## 🏃 Running the Application
-
-### Option 1: Using Maven
-```bash
-mvn clean javafx:run
+```sh
+./mvnw clean javafx:run
 ```
 
-### Option 2: Using Your IDE
-1. Open the project in IntelliJ IDEA or Eclipse
-2. Navigate to `src/main/java/com/example/programminggroupproject/Launcher.java`
-3. Right-click and select "Run"
+For IDE use, import the Maven project, select JDK 21 as both the project SDK and Maven runner JDK, and run the `javafx:run` Maven goal.
 
-### Option 3: Build JAR
-```bash
-mvn clean package
+## Backend contract and limitations
+
+No SQL schema, migrations, seed data, Auth trigger definitions, or Row Level Security policies are tracked. Obtain the matching backend setup from the project maintainer. The Java models describe the fields the app reads and writes, but do not fully define database constraints, defaults, relationships, or permissions.
+
+The REST services reference these tables:
+
+| Table | Relevant model fields |
+| --- | --- |
+| `users` | `id`, `auth_user_id`, `email`, `full_name`, `role`, `shop_id` |
+| `vehicles` | `id`, `client_id`, `make`, `model`, `year`, `license_plate` |
+| `mechanic_shops` | `id`, `name`, `address`, `city`, `phone` |
+| `services` | `id`, `name`, `description`, `base_price` |
+| `service_requests` | Client, vehicle, shop and mechanic IDs; status; estimated and final totals; notes; service description |
+| `service_request_items` | Request and service IDs; quantity; estimated and final prices; source; approval flag |
+| `payments` | `id`, `service_request_id`, `amount`, `status` |
+| `service_status_updates` | `id`, `service_request_id`, `status`, `note`, `created_by` |
+
+See [the model package](src/main/java/com/example/programminggroupproject/model) for exact JSON names and Java types. IDs are UUIDs and monetary fields use `BigDecimal`. Status strings are case-sensitive in application logic, including `Pending`, `In Progress`, `Completed`, and `Rejected`.
+
+### Authentication and access control
+
+Each Supabase Auth account needs a corresponding `public.users` profile whose `auth_user_id` matches `auth.users.id`. Signup expects a backend trigger to create that profile, although the code also attempts a fallback insert. Registration currently expects an immediate Auth session and does not handle email-confirmation-only signup responses correctly.
+
+There is a known authentication limitation: signup and login query `public.users` before attaching the newly issued access token to the REST client. With the public key configuration above, restrictive RLS policies can therefore prevent profile lookup and login even when the password is correct. This requires a change to authentication initialization; embedding a privileged key is not a solution.
+
+The dashboard's role-specific navigation is a UI behavior, not an authorization boundary. Backend policies must independently enforce ownership, role assignment, and allowed updates. No deployed policy configuration is verified by this repository's tests.
+
+Mechanic completion updates status, final price, and payment data through separate requests. These writes are not an atomic transaction. Other screens also retain synchronous backend calls and may pause during slow network responses.
+
+## Architecture
+
+The application follows an FXML/controller structure with a service layer:
+
+```text
+FXML views and CSS
+    -> JavaFX controllers
+    -> Domain logic and entity services
+    -> Supabase HTTP clients
+    -> Supabase Auth / REST API
+```
+
+Within `src/main/java/com/example/programminggroupproject/`:
+
+| Path | Responsibility |
+| --- | --- |
+| `CarServiceApp.java` | Creates the JavaFX application and login scene. |
+| `Launcher.java` | Entry point for the packaged JAR. |
+| `controller/` | Screen behavior, navigation, and presentation state. |
+| `service/ServiceCatalog.java` | Immutable service identities, price validation, and quotes. |
+| `service/ServiceRequestSubmission.java` | Validates a request and invokes its persistence boundary. |
+| `service/BaseSupabaseService.java` | Shared REST CRUD and query operations. |
+| `service/` | Entity-specific operations and authentication workflow. |
+| `client/` | HTTP requests, JSON serialization, and authentication headers. |
+| `model/` | Database and authentication response models. |
+| `session/` | Current in-memory user and authentication session. |
+| `config/` | Classpath configuration loading. |
+
+FXML and stylesheets live in `src/main/resources/com/example/programminggroupproject/`. Tests mirror the Java package structure under `src/test/java/`.
+
+## Testing
+
+Run the local suite:
+
+```powershell
+# Windows PowerShell
+.\mvnw.cmd test
+```
+
+```sh
+# macOS or Linux
+./mvnw test
+```
+
+Tests cover catalog validation, exact decimal estimates, request validation and serialization, and request-form behavior using fake persistence. They do not require Supabase credentials or contact a live backend. JavaFX tests require a graphical environment.
+
+See [docs/TESTING.md](docs/TESTING.md) for display requirements, Linux CI setup, and a command to run domain tests without JavaFX. Local test success does not verify a deployed database, authentication policies, or live payment processing.
+
+## Packaging
+
+Use `./mvnw clean package` on macOS/Linux or `.\mvnw.cmd clean package` on Windows. This runs tests and builds the shaded JAR:
+
+```sh
 java -jar target/Programming-Group-project-1.0-SNAPSHOT.jar
 ```
 
----
+The JAR requires Java 21 and includes resources from the build, including any local Supabase configuration. JavaFX has platform-specific native dependencies: build and validate the artifact on each intended operating system and architecture. The shaded JAR is not a universal desktop installer; packaging alone does not verify that it launches on another platform.
 
-## 🗄 Database Schema
+The current dependency set produces Shade warnings about overlapping resources. The local build succeeds, but dependency consolidation and cross-platform launch validation remain follow-up work.
 
-### Core Tables
+## Troubleshooting
 
-#### **users**
-```sql
-CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    auth_user_id UUID REFERENCES auth.users(id),
-    email VARCHAR(255) UNIQUE NOT NULL,
-    full_name VARCHAR(255) NOT NULL,
-    role VARCHAR(50) NOT NULL CHECK (role IN ('client', 'mechanic', 'admin')),
-    shop_id UUID REFERENCES mechanic_shops(id),
-    created_at TIMESTAMP DEFAULT NOW()
-);
-```
+| Symptom | Check |
+| --- | --- |
+| `JAVA_HOME` error or invalid target release | Set `JAVA_HOME` to JDK 21 and verify with the wrapper's `-version` command. |
+| `Unable to find supabase.properties` | Create the file directly in `src/main/resources/`, then rebuild. |
+| Login fails after successful Auth | Check the matching `public.users.auth_user_id` profile and the token-initialization limitation described above. |
+| Registration creates an account but reports failure | Check the profile trigger and whether Auth requires email confirmation. |
+| Request form cannot load | Check connectivity, backend availability, matching schema, and access policies, then retry. |
+| A service cannot be selected | Its price must be present, nonnegative, and exactly representable to two decimal places. |
+| No vehicles or shops appear | Provision matching records in the backend; vehicle creation is not exposed in the app. |
+| JavaFX tests fail to initialize | Run with a graphical display or follow the Linux virtual-display instructions in the testing guide. |
 
-#### **vehicles**
-```sql
-CREATE TABLE vehicles (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    client_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    make VARCHAR(100) NOT NULL,
-    model VARCHAR(100) NOT NULL,
-    year INTEGER NOT NULL,
-    license_plate VARCHAR(50) UNIQUE,
-    vin VARCHAR(17),
-    created_at TIMESTAMP DEFAULT NOW()
-);
-```
+## Contributors
 
-#### **services**
-```sql
-CREATE TABLE services (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    base_price DECIMAL(10, 2) NOT NULL,
-    estimated_duration INTEGER, -- minutes
-    created_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-#### **service_requests**
-```sql
-CREATE TABLE service_requests (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    client_id UUID REFERENCES users(id),
-    vehicle_id UUID REFERENCES vehicles(id),
-    shop_id UUID REFERENCES mechanic_shops(id),
-    status VARCHAR(50) DEFAULT 'pending',
-    notes TEXT,
-    scheduled_date TIMESTAMP,
-    completed_date TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-#### **service_request_items**
-```sql
-CREATE TABLE service_request_items (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    service_request_id UUID REFERENCES service_requests(id) ON DELETE CASCADE,
-    service_id UUID REFERENCES services(id),
-    quantity INTEGER DEFAULT 1,
-    unit_price DECIMAL(10, 2),
-    created_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-#### **payments**
-```sql
-CREATE TABLE payments (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    service_request_id UUID REFERENCES service_requests(id),
-    amount DECIMAL(10, 2) NOT NULL,
-    status VARCHAR(50) DEFAULT 'pending',
-    payment_method VARCHAR(50),
-    transaction_id VARCHAR(255),
-    paid_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-#### **mechanic_shops**
-```sql
-CREATE TABLE mechanic_shops (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL,
-    address TEXT,
-    phone VARCHAR(50),
-    email VARCHAR(255),
-    created_at TIMESTAMP DEFAULT NOW()
-);
-```
-
----
-
-## 👥 User Roles
-
-### 🔵 Client
-- **Email**: client@example.com
-- **Default Password**: Set during registration
-- **Capabilities**: Request services, track requests, manage vehicles, process payments
-
-### 🟢 Mechanic
-- **Email**: mechanic@example.com
-- **Default Password**: Set during registration
-- **Capabilities**: View service requests, accept/reject requests, update service status
-
-### 🔴 Admin
-- **Email**: admin@example.com
-- **Default Password**: Set during registration
-- **Capabilities**: Full system access, analytics, user management
-
----
-
-## 🎓 OOP Concepts Demonstrated
-
-### 1. **Polymorphism**
-- **Interface Implementation**: `Service<T>` interface with multiple implementations
-- **Method Overloading**: Multiple `getAll()` methods with different parameters
-- **Runtime Polymorphism**: All service classes extend `BaseSupabaseService<T>`
-
-```java
-Service<User> userService = UserService.getInstance();  // Polymorphic reference
-Service<Vehicle> vehicleService = VehicleService.getInstance();
-```
-
-### 2. **Inheritance**
-- `BaseSupabaseService<T>` provides common functionality
-- All concrete services inherit CRUD operations
-- Controllers inherit from JavaFX's base classes
-
-### 3. **Encapsulation**
-- Private fields with public getters/setters
-- Data hiding in model classes
-- Protected methods in base service class
-
-### 4. **Abstraction**
-- Abstract `BaseSupabaseService<T>` class
-- `Service<T>` interface defines contract
-- Hides implementation details from controllers
-
-### 5. **Generics**
-- Type-safe service layer: `Service<T>`
-- Reusable code for different entity types
-- Compile-time type checking
-
-### 6. **Singleton Pattern**
-```java
-public static synchronized UserService getInstance() {
-    if (instance == null) {
-        instance = new UserService();
-    }
-    return instance;
-}
-```
-
-### 7. **Composition**
-- Controllers compose services
-- Services compose HTTP clients
-- Separation of concerns
-
----
-
-## 📡 API Documentation
-
-### Authentication Endpoints
-
-#### Sign Up
-```java
-authService.signUp(email, password, fullName, role, shopId);
-```
-
-#### Sign In
-```java
-User user = authService.signIn(email, password);
-```
-
-#### Sign Out
-```java
-authService.signOut();
-```
-
-### Service Operations (Generic)
-
-All services inherit these operations from `Service<T>`:
-
-```java
-// CRUD Operations
-Optional<T> get(UUID id)
-List<T> getAll()
-T create(T object)
-T update(UUID id, T object)
-void delete(UUID id)
-
-// Filtering
-List<T> filter(String column, String operator, Object value)
-List<T> findBy(String column, Object value)
-Optional<T> findOne(Map<String, Object> criteria)
-
-// Searching
-List<T> search(String column, String searchTerm)
-List<T> searchMultiple(String searchTerm, String... columns)
-
-// Ordering
-List<T> getAllOrdered(String orderBy, boolean ascending)
-
-// Bulk Operations
-List<T> createMultiple(List<T> objects)
-void deleteMultiple(List<UUID> ids)
-
-// Utilities
-boolean exists(UUID id)
-int count()
-
-// Async Operations
-CompletableFuture<T> createAsync(T object)
-```
-
----
-
-## 🔐 Security Features
-
-- **JWT Authentication** - Secure token-based authentication
-- **Row Level Security** - Database-level access control
-- **BCrypt Password Hashing** - Secure password storage
-- **Session Management** - Automatic token refresh
-- **HTTP Interceptors** - Automatic authentication header injection
-- **Role-Based Access Control** - Different permissions for different roles
-
----
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-#### 1. **NullPointerException with headers**
-**Solution**: Ensure `supabase.anon.key` is set in `supabase.properties`
-
-#### 2. **"ComboBox is not a valid type" error**
-**Solution**: Add `<?import javafx.scene.control.ComboBox?>` to FXML files
-
-#### 3. **"Invalid login credentials"**
-**Solution**: Register a new account first before attempting to log in
-or use these credentials: vako@example.com for client and password "testpass123_".
-dsokolov@gmail.com and password "Password1".
-admin@example.com for admin and password "testpass123_".
-
-#### 4. **Connection timeout**
-**Solution**: Check your internet connection and Supabase project status
-
-#### 5. **Maven build fails**
-**Solution**: Ensure JDK 21 is installed and `JAVA_HOME` is set correctly
-
----
-
-## 📝 Future Enhancements
-
-- [ ] Email notifications for service updates
-- [ ] SMS notifications via Twilio integration
-- [ ] Real-time chat between clients and mechanics
-- [ ] Mobile application (Android/iOS)
-- [ ] Advanced analytics and reporting
-- [ ] PDF invoice generation
-- [ ] Calendar integration for scheduling
-- [ ] Multi-language support
-- [ ] Dark mode theme
-- [ ] Service history export (CSV/Excel)
-
----
-
-## 👨‍💻 Contributors
-
-- **Team Members** - Michail Sifakis, Denis Sokolov, Vako Khvedelidze, Gonzalo Nicolas, Oliver Holmes
-
----
-
-- 🐛 Issues: [GitHub Issues](https://github.com/yourusername/Car-Servicinator-3000/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/yourusername/Car-Servicinator-3000/discussions)
-
----
-
-<div align="center">
-  <strong>Built with ❤️ using Java & JavaFX</strong>
-  <br>
-  <sub>Car Servicinator 3000 © 2024</sub>
-</div>
+Michail Sifakis, Denis Sokolov, Vako Khvedelidze, Gonzalo Nicolas, and Oliver Holmes.
 
