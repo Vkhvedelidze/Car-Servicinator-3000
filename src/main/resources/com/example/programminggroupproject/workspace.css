@@ -1,0 +1,335 @@
+/* Shared desktop workspace. JavaFX uses sRGB color lookups, not browser variables. */
+.app-shell {
+    -workspace-canvas: #f3f4f1;
+    -workspace-surface: #fafbf8;
+    -workspace-ink: #253137;
+    -workspace-muted: #59656b;
+    -workspace-line: #d5dcda;
+    -workspace-control-line: #8c999e;
+    -workspace-accent: #355c73;
+    -workspace-accent-hover: #294c62;
+    -workspace-selected: #e7eff3;
+    -workspace-error: #a03130;
+    -workspace-success: #296243;
+    -fx-background-color: -workspace-canvas;
+    -fx-base: -workspace-surface;
+    -fx-control-inner-background: -workspace-surface;
+    -fx-accent: -workspace-accent;
+    -fx-focus-color: -workspace-accent;
+    -fx-faint-focus-color: transparent;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 14px;
+    -fx-text-fill: -workspace-ink;
+}
+
+.app-shell .label {
+    -fx-text-fill: -workspace-ink;
+}
+
+.app-shell .app-toolbar {
+    -fx-padding: 14 24;
+    -fx-background-color: -workspace-surface;
+    -fx-border-color: -workspace-line;
+    -fx-border-width: 0 0 1 0;
+}
+
+.app-shell .app-name {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.app-shell .page-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}
+
+.app-shell .section-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.app-shell .section-number {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -workspace-muted;
+    -fx-min-width: 22;
+}
+
+.app-shell .field-label {
+    -fx-font-weight: bold;
+}
+
+.app-shell .body-muted,
+.app-shell .caption,
+.app-shell .service-description {
+    -fx-text-fill: -workspace-muted;
+}
+
+.app-shell .caption,
+.app-shell .service-description {
+    -fx-font-size: 13px;
+}
+
+.app-shell .scroll-pane,
+.app-shell .scroll-pane > .viewport {
+    -fx-background-color: -workspace-canvas;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.app-shell .button {
+    -fx-background-color: -workspace-surface;
+    -fx-text-fill: -workspace-ink;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 16;
+    -fx-min-height: 40;
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+    -fx-border-width: 1;
+    -fx-border-color: -workspace-control-line;
+    -fx-effect: null;
+    -fx-scale-x: 1;
+    -fx-scale-y: 1;
+    -fx-opacity: 1;
+    -fx-cursor: hand;
+}
+
+.app-shell .button:hover {
+    -fx-background-color: #e7ebe8;
+    -fx-opacity: 1;
+    -fx-effect: null;
+    -fx-scale-x: 1;
+    -fx-scale-y: 1;
+}
+
+.app-shell .button:pressed {
+    -fx-background-color: #dce3df;
+    -fx-scale-x: 1;
+    -fx-scale-y: 1;
+}
+
+.app-shell .button:focused {
+    -fx-border-color: -workspace-accent;
+    -fx-border-width: 2;
+    -fx-border-insets: -3;
+}
+
+.app-shell .button-primary {
+    -fx-background-color: -workspace-accent;
+    -fx-border-color: -workspace-accent;
+    -fx-text-fill: #f6f8f9;
+}
+
+.app-shell .button-primary:hover {
+    -fx-background-color: -workspace-accent-hover;
+    -fx-border-color: -workspace-accent-hover;
+}
+
+.app-shell .button-primary:pressed {
+    -fx-background-color: #203f53;
+}
+
+.app-shell .button-quiet {
+    -fx-padding: 7 12;
+    -fx-min-height: 34;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: -workspace-accent;
+}
+
+.app-shell .button-quiet:focused {
+    -fx-border-color: -workspace-accent;
+}
+
+.app-shell .button:disabled {
+    -fx-opacity: 0.62;
+    -fx-cursor: default;
+}
+
+.app-shell .workspace-action {
+    -fx-padding: 16 18;
+    -fx-min-height: 54;
+}
+
+.app-shell .text-field,
+.app-shell .text-area,
+.app-shell .combo-box {
+    -fx-background-color: -workspace-surface;
+    -fx-text-fill: -workspace-ink;
+    -fx-prompt-text-fill: -workspace-muted;
+    -fx-border-color: -workspace-control-line;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-effect: null;
+    -fx-min-height: 40;
+}
+
+.app-shell .text-field {
+    -fx-padding: 9 12;
+}
+
+.app-shell .text-area {
+    -fx-padding: 0;
+}
+
+.app-shell .text-area .content {
+    -fx-background-color: -workspace-surface;
+    -fx-padding: 10 12;
+}
+
+.app-shell .text-field:focused,
+.app-shell .text-area:focused,
+.app-shell .combo-box:focused {
+    -fx-border-color: -workspace-accent;
+    -fx-border-width: 2;
+    -fx-border-insets: -1;
+    -fx-effect: null;
+}
+
+.app-shell .text-field:disabled,
+.app-shell .combo-box:disabled {
+    -fx-opacity: 0.62;
+}
+
+.app-shell .combo-box .list-cell {
+    -fx-padding: 8 12;
+    -fx-text-fill: -workspace-ink;
+}
+
+.app-shell .combo-box .arrow-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0 12;
+}
+
+.app-shell .radio-button,
+.app-shell .check-box {
+    -fx-text-fill: -workspace-ink;
+    -fx-label-padding: 0 0 0 9;
+    -fx-padding: 3 0;
+    -fx-cursor: hand;
+}
+
+.app-shell .radio-button .radio,
+.app-shell .check-box .box {
+    -fx-background-color: -workspace-surface;
+    -fx-border-color: -workspace-control-line;
+    -fx-border-width: 1;
+    -fx-padding: 4;
+    -fx-effect: null;
+}
+
+.app-shell .radio-button .radio {
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+}
+
+.app-shell .check-box .box {
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+
+.app-shell .radio-button:hover .radio,
+.app-shell .check-box:hover .box {
+    -fx-border-color: -workspace-accent;
+}
+
+.app-shell .radio-button:focused .radio,
+.app-shell .check-box:focused .box {
+    -fx-border-color: -workspace-accent;
+    -fx-border-width: 2;
+    -fx-border-insets: -2;
+}
+
+.app-shell .radio-button:selected .radio {
+    -fx-background-color: -workspace-surface;
+    -fx-border-color: -workspace-accent;
+}
+
+.app-shell .radio-button:selected .dot {
+    -fx-background-color: -workspace-accent;
+}
+
+.app-shell .check-box:selected .box {
+    -fx-background-color: -workspace-accent;
+    -fx-border-color: -workspace-accent;
+}
+
+.app-shell .check-box:selected .mark {
+    -fx-background-color: #f6f8f9;
+}
+
+.app-shell .service-row {
+    -fx-padding: 14 12;
+    -fx-spacing: 12;
+    -fx-alignment: center-left;
+    -fx-border-color: -workspace-line;
+    -fx-border-width: 0 0 1 0;
+}
+
+.app-shell .service-row:hover {
+    -fx-background-color: #eaede9;
+}
+
+.app-shell .service-row:selected {
+    -fx-background-color: -workspace-selected;
+}
+
+.app-shell .service-name,
+.app-shell .service-choice,
+.app-shell .service-price {
+    -fx-font-weight: bold;
+}
+
+.app-shell .service-price {
+    -fx-font-size: 14px;
+}
+
+.app-shell .service-row.unavailable .service-price {
+    -fx-text-fill: -workspace-muted;
+    -fx-font-weight: normal;
+}
+
+.app-shell .catalog-placeholder {
+    -fx-background-color: #e2e6e2;
+    -fx-background-radius: 3;
+    -fx-min-height: 18;
+    -fx-pref-height: 18;
+    -fx-max-height: 18;
+}
+
+.app-shell .estimate-bar {
+    -fx-padding: 14 28 18 28;
+    -fx-background-color: -workspace-surface;
+    -fx-border-color: -workspace-line;
+    -fx-border-width: 1 0 0 0;
+}
+
+.app-shell .estimate-value {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+}
+
+.app-shell .status-info,
+.app-shell .status-error,
+.app-shell .status-success {
+    -fx-font-size: 13px;
+    -fx-padding: 9 12;
+    -fx-background-radius: 4;
+}
+
+.app-shell .status-info {
+    -fx-background-color: #e7eff3;
+    -fx-text-fill: #294e65;
+}
+
+.app-shell .status-error {
+    -fx-background-color: #f5e9e5;
+    -fx-text-fill: -workspace-error;
+}
+
+.app-shell .status-success {
+    -fx-background-color: #e6efe6;
+    -fx-text-fill: -workspace-success;
+}

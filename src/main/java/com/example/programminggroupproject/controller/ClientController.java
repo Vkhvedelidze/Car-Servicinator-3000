@@ -1,405 +1,399 @@
 package com.example.programminggroupproject.controller;
 
+import com.example.programminggroupproject.model.MechanicShop;
+import com.example.programminggroupproject.model.Service;
 import com.example.programminggroupproject.model.ServiceRequest;
 import com.example.programminggroupproject.model.User;
 import com.example.programminggroupproject.model.Vehicle;
-import com.example.programminggroupproject.model.MechanicShop;
-import com.example.programminggroupproject.model.Service;
-import com.example.programminggroupproject.service.ServiceRequestService;
-import com.example.programminggroupproject.service.VehicleService;
-import com.example.programminggroupproject.service.MechanicShopService;
-import com.example.programminggroupproject.service.MechanicalService;
+import com.example.programminggroupproject.service.*;
 import com.example.programminggroupproject.session.Session;
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.stage.Window;
+import javafx.util.StringConverter;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 
+/** Request form: all network work runs off the JavaFX application thread. */
 public class ClientController {
+    @FXML private BorderPane requestRoot;
+    @FXML private VBox formContent;
+    @FXML private ComboBox<Vehicle> vehicleComboBox;
+    @FXML private ComboBox<MechanicShop> shopComboBox;
+    @FXML private VBox serviceList;
+    @FXML private Label catalogMessage;
+    @FXML private Button retryButton;
+    @FXML private RadioButton permissionStrictRadio;
+    @FXML private RadioButton permissionExtraRadio;
+    @FXML private RadioButton permissionAskRadio;
+    @FXML private TextField permissionBudgetField;
+    @FXML private TextArea notesArea;
+    @FXML private Label messageLabel;
+    @FXML private Label totalPriceLabel;
+    @FXML private Label selectionCountLabel;
+    @FXML private Button submitButton;
+    @FXML private Button backButton;
+    @FXML private Button paymentsButton;
 
-    @FXML
-    private ComboBox<String> vehicleComboBox;
+    /** Small boundary for deterministic tests and future alternative backends. */
+    public interface DataSource {
+        List<Vehicle> vehicles(UUID clientId);
+        List<MechanicShop> shops();
+        List<Service> services();
+        ServiceRequest create(ServiceRequest request);
+    }
 
-    @FXML
-    private ComboBox<String> shopComboBox;
+    private final DataSource source;
+    private final Supplier<User> currentUser;
+    private final Executor executor;
+    private final Map<UUID, CheckBox> choices = new LinkedHashMap<>();
+    private final ToggleGroup permissionGroup = new ToggleGroup();
+    private ServiceCatalog catalog;
+    private UUID loadedClientId;
+    private boolean loading;
+    private boolean submitting;
+    private boolean active = true;
+    private int loadVersion;
+    private final ChangeListener<Window> windowListener = (obs, previous, window) -> {
+        if (previous != null && window == null) deactivate();
+    };
 
-    // Service catalog
-    @FXML
-    private CheckBox serviceOilCheck;
+    public ClientController() {
+        this(new DataSource() {
+            public List<Vehicle> vehicles(UUID clientId) {
+                return VehicleService.getInstance().getByClientId(clientId);
+            }
+            public List<MechanicShop> shops() {
+                return MechanicShopService.getInstance().getAllOrderedByName();
+            }
+            public List<Service> services() {
+                return MechanicalService.getInstance().getAll();
+            }
+            public ServiceRequest create(ServiceRequest request) {
+                return ServiceRequestService.getInstance().create(request);
+            }
+        }, Session::getCurrentUser, command -> Thread.ofVirtual().name("request-form").start(command));
+    }
 
-    @FXML
-    private CheckBox serviceTiresCheck;
-
-    @FXML
-    private CheckBox serviceBrakesCheck;
-
-    @FXML
-    private CheckBox serviceBatteryCheck;
-
-    @FXML
-    private CheckBox serviceFluidsCheck;
-
-    @FXML
-    private CheckBox serviceEnginePerfCheck;
-
-    @FXML
-    private CheckBox serviceCleaningCheck;
-
-    @FXML
-    private CheckBox serviceCheckupCheck;
-
-    // Mechanic permissions
-    @FXML
-    private RadioButton permissionStrictRadio;
-
-    @FXML
-    private RadioButton permissionExtraRadio;
-
-    @FXML
-    private RadioButton permissionAskRadio;
-
-    @FXML
-    private TextField permissionBudgetField;
-
-    @FXML
-    private TextArea notesArea;
-
-    @FXML
-    private Label messageLabel;
-
-    @FXML
-    private Label debugLabel;
-
-    @FXML
-    private Label totalPriceLabel;
-
-    private ToggleGroup permissionGroup;
-
-    private final ServiceRequestService serviceRequestService = ServiceRequestService.getInstance();
-    private final VehicleService vehicleService = VehicleService.getInstance();
-    private final MechanicShopService shopService = MechanicShopService.getInstance();
-    private final MechanicalService mechanicalService = MechanicalService.getInstance();
-
-    private List<Vehicle> userVehicles;
-    private List<MechanicShop> availableShops;
-    private Map<CheckBox, BigDecimal> servicePrices = new HashMap<>();
+    ClientController(DataSource source, Supplier<User> currentUser, Executor executor) {
+        this.source = source;
+        this.currentUser = currentUser;
+        this.executor = executor;
+    }
 
     @FXML
     public void initialize() {
-        // Group mechanic permissions
-        permissionGroup = new ToggleGroup();
         permissionStrictRadio.setToggleGroup(permissionGroup);
         permissionExtraRadio.setToggleGroup(permissionGroup);
         permissionAskRadio.setToggleGroup(permissionGroup);
-
-        // Load data from Supabase
-        loadVehiclesAndShops();
-
-        // Load service prices and add listeners
-        loadServicePrices();
-        setupPriceListeners();
+        permissionAskRadio.setSelected(true);
+        permissionBudgetField.disableProperty().bind(permissionExtraRadio.selectedProperty().not());
+        vehicleComboBox.setConverter(new StringConverter<>() {
+            public String toString(Vehicle vehicle) {
+                return vehicle == null ? "" : vehicle.getFullInfo();
+            }
+            public Vehicle fromString(String text) { return null; }
+        });
+        shopComboBox.setConverter(new StringConverter<>() {
+            public String toString(MechanicShop shop) { return shop == null ? "" : shop.getName(); }
+            public MechanicShop fromString(String text) { return null; }
+        });
+        vehicleComboBox.valueProperty().addListener((obs, oldValue, value) -> updateSummary());
+        shopComboBox.valueProperty().addListener((obs, oldValue, value) -> updateSummary());
+        requestRoot.sceneProperty().addListener((obs, oldScene, scene) -> {
+            if (oldScene != null) oldScene.windowProperty().removeListener(windowListener);
+            if (scene != null) scene.windowProperty().addListener(windowListener);
+            if (oldScene != null && scene == null) {
+                deactivate();
+            }
+        });
+        loadOptions();
     }
 
-    private void loadVehiclesAndShops() {
-        User currentUser = Session.getCurrentUser();
-        if (currentUser == null) {
-            messageLabel.setStyle("-fx-text-fill: red;");
-            messageLabel.setText("No user logged in. Please log in again.");
+    @FXML
+    private void handleRetry() {
+        if (!loading && !submitting && active) loadOptions();
+    }
+
+    private void loadOptions() {
+        User user = currentUser.get();
+        if (user == null || user.getId() == null) {
+            showMessage("Please sign in again before requesting a service.", "status-error");
+            updateSummary();
             return;
         }
-
-        try {
-            // Load user's vehicles
-            userVehicles = vehicleService.getByClientId(currentUser.getId());
-            vehicleComboBox.getItems().clear();
-            for (Vehicle vehicle : userVehicles) {
-                String displayText = vehicle.getMake() + " " + vehicle.getModel() +
-                        " - " + vehicle.getLicensePlate();
-                vehicleComboBox.getItems().add(displayText);
-            }
-
-            if (userVehicles.isEmpty()) {
-                vehicleComboBox.setPromptText("No vehicles registered");
-                System.out.println("No vehicles registered");
-            }
-
-            // Load available mechanic shops
-            availableShops = shopService.getAllOrderedByName();
-            shopComboBox.getItems().clear();
-            for (MechanicShop shop : availableShops) {
-                shopComboBox.getItems().add(shop.getName());
-            }
-
-            if (availableShops.isEmpty()) {
-                shopComboBox.setPromptText("No shops available");
-            }
-
-        } catch (Exception e) {
-            messageLabel.setStyle("-fx-text-fill: red;");
-            messageLabel.setText("Error loading data: " + e.getMessage());
-            e.printStackTrace();
+        loadedClientId = user.getId();
+        UUID clientId = loadedClientId;
+        int version = ++loadVersion;
+        loading = true;
+        catalog = null;
+        choices.clear();
+        serviceList.getChildren().clear();
+        vehicleComboBox.getItems().clear();
+        shopComboBox.getItems().clear();
+        vehicleComboBox.setDisable(true);
+        shopComboBox.setDisable(true);
+        setCatalogMessage("Loading your vehicles, workshops, and service prices…", "status-info");
+        setRetryVisible(false);
+        showMessage("", "status-info");
+        for (int i = 0; i < 3; i++) {
+            HBox placeholder = new HBox();
+            placeholder.getStyleClass().add("catalog-placeholder");
+            placeholder.setMinHeight(54);
+            placeholder.setAccessibleText("Loading services");
+            serviceList.getChildren().add(placeholder);
         }
+        updateSummary();
+
+        CompletableFuture.supplyAsync(() -> new Options(
+                List.copyOf(source.vehicles(clientId)), List.copyOf(source.shops()),
+                ServiceCatalog.from(source.services())), executor)
+                .whenComplete((options, failure) -> Platform.runLater(() -> {
+                    if (!active || version != loadVersion) return;
+                    loading = false;
+                    serviceList.getChildren().clear();
+                    if (!isSameUser(clientId)) {
+                        showMessage("Your session changed. Please return to the dashboard and sign in again.", "status-error");
+                        updateSummary();
+                        return;
+                    }
+                    if (failure != null) {
+                        setCatalogMessage("We couldn't load your booking options. Check your connection and try again.", "status-error");
+                        setRetryVisible(true);
+                        updateSummary();
+                        return;
+                    }
+                    catalog = options.catalog();
+                    vehicleComboBox.getItems().setAll(options.vehicles());
+                    shopComboBox.getItems().setAll(options.shops());
+                    vehicleComboBox.setDisable(options.vehicles().isEmpty());
+                    shopComboBox.setDisable(options.shops().isEmpty());
+                    vehicleComboBox.setPromptText(options.vehicles().isEmpty() ? "No vehicles registered" : "Choose your vehicle");
+                    shopComboBox.setPromptText(options.shops().isEmpty() ? "No workshops available" : "Choose a workshop");
+                    renderCatalog();
+                    if (options.vehicles().isEmpty()) {
+                        showMessage("No vehicles are registered to your account. Contact your workshop to add a vehicle, then retry.", "status-info");
+                        setRetryVisible(true);
+                    } else if (options.shops().isEmpty()) {
+                        showMessage("No workshops are available yet. Please try again later.", "status-info");
+                        setRetryVisible(true);
+                    }
+                    updateSummary();
+                }));
     }
 
-    private void loadServicePrices() {
-        try {
-            List<Service> services = mechanicalService.getAll();
-            for (Service service : services) {
-                String name = service.getName().toLowerCase();
-                BigDecimal price = service.getBasePrice();
+    private record Options(List<Vehicle> vehicles, List<MechanicShop> shops, ServiceCatalog catalog) { }
 
-                if (name.contains("oil")) {
-                    serviceOilCheck.setText("🔧 Oil & Filters - €" + price);
-                    servicePrices.put(serviceOilCheck, price);
-                } else if (name.contains("tire") || name.contains("alignment")) {
-                    serviceTiresCheck.setText("🛞 Tires & Alignment - €" + price);
-                    servicePrices.put(serviceTiresCheck, price);
-                } else if (name.contains("brake")) {
-                    serviceBrakesCheck.setText("🛑 Brakes - €" + price);
-                    servicePrices.put(serviceBrakesCheck, price);
-                } else if (name.contains("battery") || name.contains("electric")) {
-                    serviceBatteryCheck.setText("🔋 Battery & Electrical - €" + price);
-                    servicePrices.put(serviceBatteryCheck, price);
-                } else if (name.contains("fluid") || name.contains("leak")) {
-                    serviceFluidsCheck.setText("💧 Fluids & Leaks - €" + price);
-                    servicePrices.put(serviceFluidsCheck, price);
-                } else if (name.contains("engine") || name.contains("performance")) {
-                    serviceEnginePerfCheck.setText("⚙️ Engine Performance - €" + price);
-                    servicePrices.put(serviceEnginePerfCheck, price);
-                } else if (name.contains("clean") || name.contains("detail")) {
-                    serviceCleaningCheck.setText("🧽 Cleaning / Detailing - €" + price);
-                    servicePrices.put(serviceCleaningCheck, price);
-                } else if (name.contains("check") || name.contains("inspection") || name.contains("general")) {
-                    serviceCheckupCheck.setText("🔍 General Check-up - €" + price);
-                    servicePrices.put(serviceCheckupCheck, price);
-                }
+    private void renderCatalog() {
+        boolean hasUnavailable = false;
+        for (ServiceCatalog.Entry entry : catalog.entries()) {
+            CheckBox choice = new CheckBox(entry.name());
+            choice.setUserData(entry.id());
+            choice.setWrapText(true);
+            choice.setMaxWidth(Double.MAX_VALUE);
+            choice.getStyleClass().add("service-choice");
+            choice.setDisable(!entry.available());
+            choices.put(entry.id(), choice);
+            Label description = new Label(entry.description() == null ? "" : entry.description());
+            description.setWrapText(true);
+            description.getStyleClass().add("service-description");
+            description.setVisible(!description.getText().isBlank());
+            description.setManaged(description.isVisible());
+            VBox details = new VBox(5, choice, description);
+            details.setMinWidth(0);
+            HBox.setHgrow(details, Priority.ALWAYS);
+            Label price = new Label(entry.available() ? money(entry.price()) : "Price unavailable");
+            price.getStyleClass().add("service-price");
+            price.setMinWidth(Label.USE_PREF_SIZE);
+            HBox row = new HBox(16, details, price);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.getStyleClass().add("service-row");
+            if (!entry.available()) {
+                hasUnavailable = true;
+                row.getStyleClass().add("unavailable");
             }
-        } catch (Exception e) {
-            System.err.println("Error loading service prices: " + e.getMessage());
+            choice.setAccessibleText(entry.name() + ", " + price.getText());
+            choice.selectedProperty().addListener((obs, oldValue, selected) -> {
+                row.pseudoClassStateChanged(PseudoClass.getPseudoClass("selected"), selected);
+                updateSummary();
+            });
+            serviceList.getChildren().add(row);
         }
+        if (catalog.entries().isEmpty()) {
+            setCatalogMessage("No services are available yet. Try again later or contact your workshop.", "status-info");
+        } else if (hasUnavailable) {
+            setCatalogMessage("Some services have no valid price and cannot be selected. Retry to refresh prices.", "status-info");
+        } else {
+            setCatalogMessage("", "status-info");
+        }
+        setRetryVisible(catalog.entries().isEmpty() || hasUnavailable);
     }
 
-    private void setupPriceListeners() {
-        CheckBox[] checkboxes = {serviceOilCheck, serviceTiresCheck, serviceBrakesCheck,
-                serviceBatteryCheck, serviceFluidsCheck, serviceEnginePerfCheck,
-                serviceCleaningCheck, serviceCheckupCheck};
-
-        for (CheckBox cb : checkboxes) {
-            cb.selectedProperty().addListener((obs, oldVal, newVal) -> updateTotalPrice());
-        }
+    private List<UUID> selectedIds() {
+        return choices.entrySet().stream().filter(entry -> entry.getValue().isSelected())
+                .map(Map.Entry::getKey).toList();
     }
 
-    private void updateTotalPrice() {
-        BigDecimal total = BigDecimal.ZERO;
-        for (Map.Entry<CheckBox, BigDecimal> entry : servicePrices.entrySet()) {
-            if (entry.getKey().isSelected()) {
-                total = total.add(entry.getValue());
+    private void updateSummary() {
+        List<UUID> ids = selectedIds();
+        boolean ready = !loading && catalog != null && catalog.entries().stream().anyMatch(ServiceCatalog.Entry::available);
+        boolean valid = ready;
+        if (!ready) {
+            totalPriceLabel.setText("Unavailable");
+        } else if (ids.isEmpty()) {
+            totalPriceLabel.setText(money(BigDecimal.ZERO));
+        } else {
+            try {
+                totalPriceLabel.setText(money(catalog.quote(ids).total()));
+            } catch (IllegalArgumentException invalidSelection) {
+                totalPriceLabel.setText("Unavailable");
+                valid = false;
             }
         }
-        totalPriceLabel.setText("Estimated Total: €" + total.setScale(2));
+        selectionCountLabel.setText(ids.isEmpty() ? "No services selected" : ids.size() + (ids.size() == 1 ? " service selected" : " services selected"));
+        submitButton.setDisable(!valid || ids.isEmpty() || submitting || vehicleComboBox.getValue() == null || shopComboBox.getValue() == null);
     }
 
     @FXML
     private void handleSubmit() {
-        String vehicleSelection = vehicleComboBox.getValue();
-        String shopSelection = shopComboBox.getValue();
-
-        // Collect chosen services
-        List<String> services = new ArrayList<>();
-        if (serviceOilCheck.isSelected()) {
-            services.add("Oil & Filters");
-        }
-        if (serviceTiresCheck.isSelected()) {
-            services.add("Tires & Alignment");
-        }
-        if (serviceBrakesCheck.isSelected()) {
-            services.add("Brakes");
-        }
-        if (serviceBatteryCheck.isSelected()) {
-            services.add("Battery & Electrical");
-        }
-        if (serviceFluidsCheck.isSelected()) {
-            services.add("Fluids & Leaks");
-        }
-        if (serviceEnginePerfCheck.isSelected()) {
-            services.add("Engine Performance");
-        }
-        if (serviceCleaningCheck.isSelected()) {
-            services.add("Cleaning / Detailing");
-        }
-        if (serviceCheckupCheck.isSelected()) {
-            services.add("General check-up");
-        }
-
-        String notes = notesArea.getText().trim();
-
-        // ✅ Validation: vehicle & shop
-        if (vehicleSelection == null || shopSelection == null) {
-            messageLabel.setStyle("-fx-text-fill: red;");
-            messageLabel.setText("Please select a vehicle and a mechanic shop.");
+        if (loading || submitting || !active) return;
+        if (!isSameUser(loadedClientId)) {
+            showMessage("Please sign in again before submitting your request.", "status-error");
             return;
         }
-
-        // ✅ Validation: at least one service
-        if (services.isEmpty()) {
-            messageLabel.setStyle("-fx-text-fill: red;");
-            messageLabel.setText("Please choose at least one service.");
+        Vehicle vehicle = vehicleComboBox.getValue();
+        MechanicShop shop = shopComboBox.getValue();
+        if (vehicle == null || shop == null) {
+            showMessage("Choose a vehicle and a workshop before continuing.", "status-error");
             return;
         }
-
-        // ✅ Validation: mechanic permissions
-        if (permissionGroup.getSelectedToggle() == null) {
-            messageLabel.setStyle("-fx-text-fill: red;");
-            messageLabel.setText("Please choose the mechanic permissions.");
+        List<UUID> ids = selectedIds();
+        String notes;
+        try {
+            if (catalog == null) throw new IllegalArgumentException("Wait for the service prices to load, then try again.");
+            catalog.quote(ids);
+            notes = permissionNotes();
+        } catch (IllegalArgumentException invalidRequest) {
+            showMessage(invalidRequest.getMessage(), "status-error");
             return;
         }
+        UUID clientId = loadedClientId;
+        ServiceCatalog snapshot = catalog;
+        submitting = true;
+        setSubmitting(true);
+        showMessage("Submitting your request…", "status-info");
+        CompletableFuture.supplyAsync(() -> new ServiceRequestSubmission(source::create)
+                .submit(clientId, vehicle.getId(), shop.getId(), snapshot, ids, notes), executor)
+                .whenComplete((saved, failure) -> Platform.runLater(() -> {
+                    if (!active) return;
+                    submitting = false;
+                    setSubmitting(false);
+                    if (!isSameUser(clientId)) {
+                        submitButton.setDisable(true);
+                        showMessage("Your session changed. Return to the dashboard and sign in again to check your requests.", "status-error");
+                        return;
+                    }
+                    if (failure != null) {
+                        showMessage("We couldn't confirm your request. Check My requests from the dashboard before submitting again.", "status-error");
+                        return;
+                    }
+                    choices.values().forEach(choice -> choice.setSelected(false));
+                    permissionAskRadio.setSelected(true);
+                    permissionBudgetField.clear();
+                    notesArea.clear();
+                    updateSummary();
+                    showMessage("Request submitted. Follow its progress in My requests from the dashboard.", "status-success");
+                }));
+    }
 
-        String permissionDescription;
-        BigDecimal budget = null;
-
+    private String permissionNotes() {
+        String permission;
         if (permissionStrictRadio.isSelected()) {
-            permissionDescription = "Only the selected services, nothing else.";
+            permission = "Only the selected services, nothing else.";
         } else if (permissionExtraRadio.isSelected()) {
-            String budgetText = permissionBudgetField.getText().trim();
-            if (budgetText.isEmpty()) {
-                messageLabel.setStyle("-fx-text-fill: red;");
-                messageLabel.setText("Please set a € limit for extra work.");
-                return;
+            String input = permissionBudgetField.getText().trim().replace(',', '.');
+            if (!input.matches("[0-9]+(\\.[0-9]{1,2})?")) {
+                permissionBudgetField.requestFocus();
+                throw new IllegalArgumentException("Enter an extra-work limit of zero or more, with up to two decimal places.");
             }
-            try {
-                budget = new BigDecimal(budgetText.replace(",", "."));
-            } catch (NumberFormatException e) {
-                messageLabel.setStyle("-fx-text-fill: red;");
-                messageLabel.setText("Invalid € limit. Use a number like 50 or 100.5");
-                return;
-            }
-            if (budget.compareTo(BigDecimal.ZERO) < 0) {
-                messageLabel.setStyle("-fx-text-fill: red;");
-                messageLabel.setText("€ limit cannot be negative.");
-                return;
-            }
-            permissionDescription = "Mechanic may do extra work up to " + budget + "€.";
+            BigDecimal budget = new BigDecimal(input);
+            permission = "Mechanic may do extra work up to " + money(budget) + ".";
         } else if (permissionAskRadio.isSelected()) {
-            permissionDescription = "Mechanic must ask before doing anything else.";
+            permission = "Mechanic must ask before doing anything else.";
         } else {
-            permissionDescription = "Unknown permissions.";
+            throw new IllegalArgumentException("Choose how the mechanic should handle additional work.");
         }
-
-        // Combine permission info with user notes
-        String fullNotes = "📋 PERMISSIONS: " + permissionDescription;
-        if (!notes.isEmpty()) {
-            fullNotes += "\n\n📝 CLIENT NOTES: " + notes;
-        }
-
-        // Calculate total price from selected services
-        BigDecimal totalEstimated = BigDecimal.ZERO;
-        for (Map.Entry<CheckBox, BigDecimal> entry : servicePrices.entrySet()) {
-            if (entry.getKey().isSelected()) {
-                totalEstimated = totalEstimated.add(entry.getValue());
-            }
-        }
-
-        // Get the selected vehicle and shop IDs
-        int vehicleIndex = vehicleComboBox.getSelectionModel().getSelectedIndex();
-        int shopIndex = shopComboBox.getSelectionModel().getSelectedIndex();
-
-        if (vehicleIndex < 0 || shopIndex < 0) {
-            messageLabel.setStyle("-fx-text-fill: red;");
-            messageLabel.setText("Invalid selection. Please try again.");
-            return;
-        }
-
-        UUID vehicleId = userVehicles.get(vehicleIndex).getId();
-        UUID shopId = availableShops.get(shopIndex).getId();
-        User currentUser = Session.getCurrentUser();
-
-        try {
-            // Create ServiceRequest with proper Supabase schema
-            ServiceRequest request = new ServiceRequest();
-            request.setClientId(currentUser.getId());
-            request.setVehicleId(vehicleId);
-            request.setShopId(shopId);
-            request.setStatus("Pending");
-            request.setTotalPriceEstimated(totalEstimated);
-            request.setServiceDescription(String.join(", ", services));
-            request.setNotes(fullNotes);  // Use combined notes with permissions
-
-            // Save to Supabase
-            ServiceRequest createdRequest = serviceRequestService.create(request);
-
-            System.out.println("=== New service request created ===");
-            System.out.println("Request ID: " + createdRequest.getId());
-            System.out.println("Vehicle: " + vehicleSelection);
-            System.out.println("Shop: " + shopSelection);
-            System.out.println("Services: " + String.join(", ", services));
-
-            messageLabel.setStyle("-fx-text-fill: #28a745;");
-            messageLabel.setText("Service request submitted successfully!");
-
-            // Clear form
-            clearForm();
-
-        } catch (Exception e) {
-            messageLabel.setStyle("-fx-text-fill: red;");
-            messageLabel.setText("Error submitting request: " + e.getMessage());
-            e.printStackTrace();
-        }
+        String notes = notesArea.getText().trim();
+        return "PERMISSIONS: " + permission + (notes.isEmpty() ? "" : "\n\nCLIENT NOTES: " + notes);
     }
 
-    private void clearForm() {
-        serviceOilCheck.setSelected(false);
-        serviceTiresCheck.setSelected(false);
-        serviceBrakesCheck.setSelected(false);
-        serviceBatteryCheck.setSelected(false);
-        serviceFluidsCheck.setSelected(false);
-        serviceEnginePerfCheck.setSelected(false);
-        serviceCleaningCheck.setSelected(false);
-        serviceCheckupCheck.setSelected(false);
-        permissionGroup.selectToggle(null);
-        permissionBudgetField.clear();
-        notesArea.clear();
+    private void setSubmitting(boolean busy) {
+        formContent.setDisable(busy);
+        backButton.setDisable(busy);
+        paymentsButton.setDisable(busy);
+        submitButton.setText(busy ? "Submitting…" : "Submit request");
+        updateSummary();
     }
 
-    @FXML
-    private void handleBack() {
+    private boolean isSameUser(UUID clientId) {
+        User user = currentUser.get();
+        return clientId != null && user != null && clientId.equals(user.getId());
+    }
+
+    private void deactivate() {
+        active = false;
+        loadVersion++;
+    }
+
+    private static String money(BigDecimal amount) { return "€" + amount.setScale(2).toPlainString(); }
+
+    private void setCatalogMessage(String text, String style) { setStatus(catalogMessage, text, style); }
+    private void showMessage(String text, String style) { setStatus(messageLabel, text, style); }
+    private static void setStatus(Label label, String text, String style) {
+        label.getStyleClass().removeAll("status-error", "status-info", "status-success");
+        label.getStyleClass().add(style);
+        label.setText(text);
+        label.setVisible(!text.isBlank());
+        label.setManaged(!text.isBlank());
+    }
+    private void setRetryVisible(boolean visible) {
+        retryButton.setVisible(visible);
+        retryButton.setManaged(visible);
+    }
+
+    @FXML private void handleBack() { navigate("dashboard.fxml", "Dashboard - Car Servicinator 3000"); }
+    @FXML private void handleViewPayments() { navigate("payment-view.fxml", "Payments - Car Servicinator 3000"); }
+
+    private void navigate(String view, String title) {
+        if (submitting) return;
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/example/programminggroupproject/dashboard.fxml"));
-            Scene scene = new Scene(loader.load(), 800, 600);
-
-            // Restore current user & role-based dashboard
-            DashboardController controller = loader.getController();
-            User currentUser = Session.getCurrentUser();
-            if (currentUser != null) {
-                controller.setUser(currentUser);
-            }
-
-            Stage stage = (Stage) debugLabel.getScene().getWindow();
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/programminggroupproject/" + view));
+            Scene scene = new Scene(loader.load(), requestRoot.getScene().getWidth(), requestRoot.getScene().getHeight());
+            if (loader.getController() instanceof DashboardController dashboard) dashboard.setUser(currentUser.get());
+            Stage stage = (Stage) requestRoot.getScene().getWindow();
             stage.setScene(scene);
-            stage.setTitle("Dashboard - Car Servicinator 3000");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @FXML
-    private void handleViewPayments() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/programminggroupproject/payment-view.fxml"));
-            Scene scene = new Scene(loader.load(), 800, 600);
-            Stage stage = (Stage) vehicleComboBox.getScene().getWindow();
-            stage.setScene(scene);
-        } catch (IOException e) {
-            e.printStackTrace();
+            stage.setTitle(title);
+        } catch (IOException failure) {
+            showMessage("We couldn't open that screen. Please try again.", "status-error");
         }
     }
 }

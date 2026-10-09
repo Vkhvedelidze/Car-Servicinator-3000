@@ -3,61 +3,44 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
 
-<VBox alignment="CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.example.programminggroupproject.controller.LoginController"
-      prefWidth="800" prefHeight="600" style="-fx-background-color: #f5f5f5;">
-    <padding>
-        <Insets bottom="40.0" left="40.0" right="40.0" top="40.0"/>
-    </padding>
-
-    <Label text="CAR SERVICINATOR 3000">
-        <font>
-            <Font name="System Bold" size="28.0"/>
-        </font>
-    </Label>
-
-    <Label text="Login to your account">
-        <font>
-            <Font size="16.0"/>
-        </font>
-    </Label>
-
-    <Region VBox.vgrow="SOMETIMES" minHeight="30"/>
-
-    <VBox spacing="15.0" alignment="CENTER" maxWidth="350" style="-fx-background-color: white; -fx-padding: 30; -fx-background-radius: 10;">
-        
-        <Label text="Email:">
-            <font>
-                <Font size="14.0"/>
-            </font>
-        </Label>
-        <TextField fx:id="usernameField" promptText="Enter email address" prefWidth="300"/>
-
-        <Label text="Password:">
-            <font>
-                <Font size="14.0"/>
-            </font>
-        </Label>
-        <PasswordField fx:id="passwordField" promptText="Enter password" prefWidth="300"/>
-
-        <Label fx:id="errorLabel" textFill="RED" wrapText="true">
-            <font>
-                <Font size="12.0"/>
-            </font>
-        </Label>
-
-        <Button text="Login" onAction="#handleLogin" prefWidth="300" 
-                style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;">
-        </Button>
-        <Button text="Register New Account" onAction="#handleRegister" prefWidth="300"
-                style="-fx-background-color: transparent; -fx-text-fill: #007bff; -fx-font-size: 12px; -fx-underline: true;"/>
-    </VBox>
-
-    <Region VBox.vgrow="SOMETIMES"/>
-    
-    <Label text="Register a new account to get started" 
-           style="-fx-text-fill: #666; -fx-font-size: 11px;"/>
-</VBox>
-
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.example.programminggroupproject.controller.LoginController"
+            styleClass="app-shell,login-screen" stylesheets="@workspace.css"
+            prefWidth="800" prefHeight="600">
+    <top>
+        <HBox styleClass="app-toolbar" alignment="CENTER_LEFT">
+            <Label text="Car Servicinator 3000" styleClass="app-name"/>
+        </HBox>
+    </top>
+    <center>
+        <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" focusTraversable="false">
+            <content>
+                <StackPane alignment="CENTER">
+                    <padding><Insets top="28" right="28" bottom="28" left="28"/></padding>
+                    <VBox spacing="20" maxWidth="380" maxHeight="-Infinity">
+                        <VBox spacing="6">
+                            <Label text="Sign in" styleClass="page-title"/>
+                            <Label text="Access your vehicle services and requests." styleClass="body-muted" wrapText="true"/>
+                        </VBox>
+                        <VBox spacing="6">
+                            <Label text="Email address" labelFor="${usernameField}" styleClass="field-label"/>
+                            <TextField fx:id="usernameField" promptText="Enter your email address" maxWidth="Infinity"/>
+                        </VBox>
+                        <VBox spacing="6">
+                            <Label text="Password" labelFor="${passwordField}" styleClass="field-label"/>
+                            <PasswordField fx:id="passwordField" promptText="Enter your password"
+                                           onAction="#handleLogin" maxWidth="Infinity"/>
+                        </VBox>
+                        <Label fx:id="errorLabel" text="" wrapText="true" maxWidth="Infinity"
+                               styleClass="status-error" managed="${!errorLabel.text.empty}" visible="${!errorLabel.text.empty}"/>
+                        <Button text="Sign in" onAction="#handleLogin" defaultButton="true" maxWidth="Infinity"
+                                styleClass="button,button-primary"/>
+                        <Button text="Create an account" onAction="#handleRegister" maxWidth="Infinity"
+                                styleClass="button,button-secondary"/>
+                    </VBox>
+                </StackPane>
+            </content>
+        </ScrollPane>
+    </center>
+</BorderPane>

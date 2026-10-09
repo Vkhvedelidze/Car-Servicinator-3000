@@ -3,115 +3,108 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
 
-<VBox xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.example.programminggroupproject.controller.ClientController"
-      alignment="TOP_CENTER"
-      spacing="20"
-      prefWidth="800" prefHeight="600"
-      style="-fx-background-color: #f5f5f5;">
-
-    <padding>
-        <Insets top="40" right="40" bottom="40" left="40"/>
-    </padding>
-
-    <!-- Top bar -->
-    <HBox alignment="CENTER_LEFT"
-          style="-fx-background-color: #343a40; -fx-padding: 15; -fx-background-radius: 8;">
-        <Label text="CAR SERVICINATOR 3000"
-               style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;"/>
-        <Region HBox.hgrow="ALWAYS"/>
-        <Button text="Back to Dashboard"
-                onAction="#handleBack"
-                style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-padding: 6 12;"/>
-        <Button text="View Payments" onAction="#handleViewPayments"/>
-    </HBox>
-
-    <!-- Content -->
-    <VBox spacing="15" alignment="CENTER">
-        <Label text="Request Service">
-            <font>
-                <Font name="System Bold" size="26"/>
-            </font>
-        </Label>
-
-        <Label text="Fill in the details below to request a service for your vehicle."
-               style="-fx-text-fill: #666;"/>
-
-        <VBox spacing="10" maxWidth="400">
-
-            <Label text="Select Vehicle"/>
-            <ComboBox fx:id="vehicleComboBox"
-                      promptText="Choose vehicle"/>
-
-            <Label text="Select Mechanic Shop"/>
-            <ComboBox fx:id="shopComboBox"
-                      promptText="Choose mechanic shop"/>
-
-            <Label text="Choose the services you want" />
-
-            <!-- Service catalog -->
-            <VBox spacing="5">
-                <CheckBox fx:id="serviceOilCheck"
-                          text="🔧 Oil &amp; Filters / Basic service"/>
-                <CheckBox fx:id="serviceTiresCheck"
-                          text="🛞 Tires &amp; Alignment"/>
-                <CheckBox fx:id="serviceBrakesCheck"
-                          text="🛑 Brakes"/>
-                <CheckBox fx:id="serviceBatteryCheck"
-                          text="🔋 Battery &amp; Electrical"/>
-                <CheckBox fx:id="serviceFluidsCheck"
-                          text="💧 Fluids &amp; Leaks"/>
-                <CheckBox fx:id="serviceEnginePerfCheck"
-                          text="💨 Engine Performance"/>
-                <CheckBox fx:id="serviceCleaningCheck"
-                          text="🧼 Cleaning / Detailing"/>
-                <CheckBox fx:id="serviceCheckupCheck"
-                          text="🧪 General check-up"/>
-            </VBox>
-
-            <Label fx:id="totalPriceLabel" 
-            text="Estimated Total: €0.00" 
-            style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #007bff;"/>
-
-            <!-- Mechanic permissions -->
-            <Label text="Mechanic permissions" />
-
-            <VBox spacing="5">
-                <RadioButton fx:id="permissionStrictRadio"
-                             text="Only perform the selected services, nothing else."/>
-
-                <HBox spacing="5" alignment="CENTER_LEFT">
-                    <RadioButton fx:id="permissionExtraRadio"
-                                 text="You may do extra work up to:"/>
-                    <TextField fx:id="permissionBudgetField"
-                               promptText="€ limit"
-                               prefWidth="80"/>
-                </HBox>
-
-                <RadioButton fx:id="permissionAskRadio"
-                             text="Contact me before doing anything else."/>
-            </VBox>
-
-            <!-- Notes -->
-            <Label text="Additional notes (optional)"/>
-            <TextArea fx:id="notesArea"
-                      promptText="Anything else the mechanic should know?"
-                      prefRowCount="3"/>
-
-            <Button text="Submit Request"
-                    onAction="#handleSubmit"
-                    style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-padding: 8 16;"/>
-
-            <Label fx:id="messageLabel"
-                   text=""
-                   style="-fx-text-fill: #28a745;"/>
-
-            <Label fx:id="debugLabel"
-                   text="Client request screen"
-                   style="-fx-text-fill: #999; -fx-font-size: 11;"/>
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.example.programminggroupproject.controller.ClientController"
+            fx:id="requestRoot" styleClass="app-shell,request-screen"
+            stylesheets="@workspace.css" prefWidth="900" prefHeight="720">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="8" styleClass="app-toolbar">
+            <Label text="Car Servicinator 3000" styleClass="app-name" minWidth="0"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="backButton" text="Dashboard" onAction="#handleBack" styleClass="button,button-quiet"/>
+            <Button fx:id="paymentsButton" text="Payments" onAction="#handleViewPayments" styleClass="button,button-quiet"/>
+        </HBox>
+    </top>
+    <center>
+        <ScrollPane fx:id="formScroll" fitToWidth="true" hbarPolicy="NEVER"
+                    styleClass="scroll-pane,form-scroll" focusTraversable="false">
+            <content>
+                <VBox fx:id="formContent" spacing="28" maxWidth="900" styleClass="form-content">
+                    <padding><Insets top="28" right="28" bottom="32" left="28"/></padding>
+                    <VBox spacing="6">
+                        <Label text="Request a service" styleClass="page-title"/>
+                        <Label text="Choose your services, review the estimate, and set permission for any additional work."
+                               styleClass="body-muted" wrapText="true" maxWidth="650"/>
+                    </VBox>
+                    <VBox spacing="16" styleClass="form-section">
+                        <HBox spacing="12" alignment="CENTER_LEFT">
+                            <Label text="01" styleClass="section-number"/>
+                            <Label text="Vehicle &amp; workshop" styleClass="section-title"/>
+                        </HBox>
+                        <HBox spacing="16">
+                            <VBox spacing="6" prefWidth="300" minWidth="0" HBox.hgrow="ALWAYS">
+                                <Label text="Vehicle" labelFor="${vehicleComboBox}" styleClass="field-label"/>
+                                <ComboBox fx:id="vehicleComboBox" promptText="Choose a vehicle" minWidth="0" maxWidth="Infinity"/>
+                            </VBox>
+                            <VBox spacing="6" prefWidth="300" minWidth="0" HBox.hgrow="ALWAYS">
+                                <Label text="Workshop" labelFor="${shopComboBox}" styleClass="field-label"/>
+                                <ComboBox fx:id="shopComboBox" promptText="Choose a workshop" minWidth="0" maxWidth="Infinity"/>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                    <VBox spacing="12" styleClass="form-section">
+                        <HBox spacing="12" alignment="CENTER_LEFT">
+                            <Label text="02" styleClass="section-number"/>
+                            <Label text="Services" styleClass="section-title"/>
+                        </HBox>
+                        <Label text="Select the work you need. All prices are estimates in EUR."
+                               styleClass="body-muted" wrapText="true"/>
+                        <Label fx:id="catalogMessage" text="Loading services and prices…" wrapText="true"
+                               maxWidth="Infinity" styleClass="status-info"/>
+                        <Button fx:id="retryButton" text="Try loading again" onAction="#handleRetry"
+                                visible="false" managed="false" styleClass="button,button-secondary"/>
+                        <VBox fx:id="serviceList" spacing="0" styleClass="service-list"/>
+                    </VBox>
+                    <VBox spacing="14" styleClass="form-section">
+                        <HBox spacing="12" alignment="CENTER_LEFT">
+                            <Label text="03" styleClass="section-number"/>
+                            <Label text="Additional work" styleClass="section-title"/>
+                        </HBox>
+                        <Label text="Tell the mechanic what to do if your vehicle needs more work."
+                               styleClass="body-muted" wrapText="true"/>
+                        <RadioButton fx:id="permissionStrictRadio" text="Only perform the services I selected"
+                                     wrapText="true" maxWidth="Infinity"/>
+                        <VBox spacing="8">
+                            <RadioButton fx:id="permissionExtraRadio" text="Allow additional work within a budget"
+                                         wrapText="true" maxWidth="Infinity"/>
+                            <VBox spacing="6" visible="${permissionExtraRadio.selected}" managed="${permissionExtraRadio.selected}">
+                                <padding><Insets left="28"/></padding>
+                                <Label text="Additional budget (€)" labelFor="${permissionBudgetField}" styleClass="field-label"/>
+                                <TextField fx:id="permissionBudgetField" promptText="For example, 100.00"
+                                           maxWidth="220" disable="true"/>
+                                <Label text="This is extra to the service estimate." styleClass="caption" wrapText="true"/>
+                            </VBox>
+                        </VBox>
+                        <RadioButton fx:id="permissionAskRadio" text="Contact me before doing any additional work"
+                                     wrapText="true" maxWidth="Infinity"/>
+                    </VBox>
+                    <VBox spacing="12" styleClass="form-section">
+                        <HBox spacing="12" alignment="CENTER_LEFT">
+                            <Label text="04" styleClass="section-number"/>
+                            <Label text="Notes" labelFor="${notesArea}" styleClass="section-title"/>
+                            <Label text="Optional" styleClass="caption"/>
+                        </HBox>
+                        <TextArea fx:id="notesArea" promptText="Describe any symptoms or details the mechanic should know."
+                                  wrapText="true" prefRowCount="3" minHeight="100" maxHeight="160"/>
+                    </VBox>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+    <bottom>
+        <VBox spacing="10" styleClass="estimate-bar">
+            <Label fx:id="messageLabel" text="" wrapText="true" maxWidth="Infinity"
+                   visible="false" managed="false" styleClass="status-info"/>
+            <HBox alignment="CENTER_LEFT" spacing="20">
+                <VBox spacing="3" HBox.hgrow="ALWAYS" minWidth="0">
+                    <Label text="Estimated service total" styleClass="field-label"/>
+                    <Label fx:id="totalPriceLabel" text="Unavailable" styleClass="estimate-value"/>
+                    <Label fx:id="selectionCountLabel" text="No services selected" styleClass="caption"/>
+                </VBox>
+                <Button fx:id="submitButton" text="Submit request" onAction="#handleSubmit"
+                        styleClass="button,button-primary" disable="true" minWidth="150"/>
+            </HBox>
         </VBox>
-    </VBox>
-
-</VBox>
+    </bottom>
+</BorderPane>
