@@ -30,6 +30,13 @@ public class DashboardController {
 
     private User currentUser;
 
+    @FXML
+    public void initialize() {
+        for (Button action : new Button[]{clientButton, clientRequestsButton, mechanicButton, adminButton}) {
+            action.managedProperty().bind(action.visibleProperty());
+        }
+    }
+
     public void setUser(User user) {
         this.currentUser = user;
 

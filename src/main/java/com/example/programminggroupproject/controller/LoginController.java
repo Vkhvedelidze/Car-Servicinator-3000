@@ -50,8 +50,6 @@ public class LoginController {
             errorLabel.setText("Invalid email or password");
         }
 
-        System.out.println("Entered email: [" + email + "]");
-        System.out.println("Entered password: [" + password + "]");
     }
 
     private void navigateToDashboard(User user) {

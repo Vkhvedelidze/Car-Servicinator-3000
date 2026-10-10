@@ -3,71 +3,44 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
 
-<VBox xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.example.programminggroupproject.controller.DashboardController"
-      prefWidth="800" prefHeight="600" style="-fx-background-color: #f5f5f5;">
-
-    <HBox alignment="CENTER_LEFT" style="-fx-background-color: #343a40; -fx-padding: 15;">
-        <Label text="CAR SERVICINATOR 3000" style="-fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold;"/>
-        <Region HBox.hgrow="ALWAYS"/>
-        <Label fx:id="welcomeLabel" text="Welcome!" style="-fx-text-fill: white; -fx-font-size: 14px;"/>
-        <Region minWidth="20"/>
-        <Button text="Logout" onAction="#handleLogout" 
-                style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-padding: 8 15;"/>
-    </HBox>
-
-    <VBox alignment="CENTER" spacing="30" VBox.vgrow="ALWAYS">
-        <padding>
-            <Insets top="50.0" right="40.0" bottom="40.0" left="40.0"/>
-        </padding>
-
-        <Label text="Dashboard">
-            <font>
-                <Font name="System Bold" size="32.0"/>
-            </font>
-        </Label>
-
-        <Label text="Welcome to your dashboard!">
-            <font>
-                <Font size="16.0"/>
-            </font>
-        </Label>
-
-        <!-- Client role buttons -->
-        <Button fx:id="clientButton"
-                text="Request Service"
-                prefWidth="250"
-                visible="false"
-                onAction="#handleClientAction"
-                style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12;"/>
-        
-        <Button fx:id="clientRequestsButton"
-                text="My Requests"
-                prefWidth="250"
-                visible="false"
-                onAction="#handleClientRequestsAction"
-                style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12;"/>
-
-        <!-- Mechanic role button -->
-        <Button fx:id="mechanicButton"
-                text="View Assigned Jobs"
-                prefWidth="250"
-                visible="false"
-                onAction="#handleMechanicAction"
-                style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12;"/>
-
-        <!-- Admin role button -->
-        <Button fx:id="adminButton"
-                text="Manage System"
-                prefWidth="250"
-                visible="false"
-                onAction="#handleAdminAction"
-                style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12;"/>
-        
-        <Label text="(Features coming soon)" style="-fx-text-fill: #666; -fx-font-size: 12px;"/>
-    </VBox>
-</VBox>
-
-
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.example.programminggroupproject.controller.DashboardController"
+            styleClass="app-shell,dashboard-screen" stylesheets="@workspace.css"
+            prefWidth="800" prefHeight="600">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="16" styleClass="app-toolbar">
+            <Label text="Car Servicinator 3000" styleClass="app-name"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="Sign out" onAction="#handleLogout" styleClass="button,button-quiet"/>
+        </HBox>
+    </top>
+    <center>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" focusTraversable="false">
+            <content>
+                <VBox spacing="32" maxWidth="800">
+                    <padding><Insets top="40" right="32" bottom="40" left="32"/></padding>
+                    <VBox spacing="8">
+                        <Label text="Dashboard" styleClass="page-title"/>
+                        <Label fx:id="welcomeLabel" text="Welcome" styleClass="body-muted" wrapText="true"/>
+                    </VBox>
+                    <VBox spacing="14" maxWidth="480">
+                        <Label text="Your workspace" styleClass="section-title"/>
+                        <Button fx:id="clientButton" text="Request a service" visible="false"
+                                onAction="#handleClientAction" maxWidth="Infinity" alignment="CENTER_LEFT"
+                                styleClass="button,button-primary,workspace-action"/>
+                        <Button fx:id="clientRequestsButton" text="My requests" visible="false"
+                                onAction="#handleClientRequestsAction" maxWidth="Infinity" alignment="CENTER_LEFT"
+                                styleClass="button,button-secondary,workspace-action"/>
+                        <Button fx:id="mechanicButton" text="View assigned jobs" visible="false"
+                                onAction="#handleMechanicAction" maxWidth="Infinity" alignment="CENTER_LEFT"
+                                styleClass="button,button-primary,workspace-action"/>
+                        <Button fx:id="adminButton" text="Manage system" visible="false"
+                                onAction="#handleAdminAction" maxWidth="Infinity" alignment="CENTER_LEFT"
+                                styleClass="button,button-primary,workspace-action"/>
+                    </VBox>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+</BorderPane>
